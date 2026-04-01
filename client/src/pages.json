@@ -1,0 +1,61 @@
+{
+	"pages": [
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/register/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "暖阳陪伴",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/reminders/reminders",
+			"style": {
+				"navigationBarTitleText": "提醒事项"
+			}
+		},
+		{
+			"path": "pages/health/health",
+			"style": {
+				"navigationBarTitleText": "健康记录"
+			}
+		},
+		{
+			"path": "pages/life/life",
+			"style": {
+				"navigationBarTitleText": "生活查询"
+			}
+		},
+		{
+			"path": "pages/ai/ai",
+			"style": {
+				"navigationBarTitleText": "暖阳陪聊"
+			}
+		},
+		{
+			"path": "pages/vip/vip",
+			"style": {
+				"navigationBarTitleText": "开通会员"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "暖阳陪伴",
+		"navigationBarBackgroundColor": "#F8F9FA",
+		"backgroundColor": "#F8F9FA"
+	}
+}
