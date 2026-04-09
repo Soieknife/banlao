@@ -40,7 +40,11 @@ const handleLogin = async () => {
 		uni.setStorageSync('user', JSON.stringify(res.data.user));
 		
 		speak(`欢迎回来，${res.data.user.nickname || res.data.user.username}`);
-		uni.reLaunch({ url: '/pages/index/index' });
+		if (res.data.user.role === 'child') {
+			uni.reLaunch({ url: '/pages/child/index/index' });
+		} else {
+			uni.reLaunch({ url: '/pages/index/index' });
+		}
 	} catch (err) {
 		speak(err.message || '登录失败');
 		uni.showToast({ title: err.message || '登录失败', icon: 'none' });

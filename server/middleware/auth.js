@@ -13,7 +13,9 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET || 'warm_sun_secret');
+        const raw = String(token).trim();
+        const value = raw.toLowerCase().startsWith('bearer ') ? raw.slice(7).trim() : raw;
+        const decoded = jwt.verify(value, process.env.JWT_SECRET || 'warm_sun_secret');
         req.user = decoded;
         next();
     } catch (err) {

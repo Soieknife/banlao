@@ -4,8 +4,10 @@
 		<scroll-view scroll-y class="chat-history" :scroll-into-view="lastMsgId">
 			<view v-for="(msg, index) in messages" :key="index" :id="'msg-' + index" class="chat-item" :class="msg.role">
 				<view class="avatar">
-					<image v-if="msg.role === 'ai'" src="/static/ai_avatar.png" class="avatar-img"></image>
-					<image v-else src="/static/user_avatar.png" class="avatar-img"></image>
+					<view class="avatar-circle">
+						<text v-if="msg.role === 'ai'">🤖</text>
+						<text v-else>🙂</text>
+					</view>
 				</view>
 				<view class="content card-elder">
 					<text class="text-content">{{ msg.text }}</text>
@@ -43,16 +45,11 @@ const user = ref({});
  */
 const startVoice = () => {
 	if (!user.value.is_vip) {
-		speak('开通会员即可享受无限次 AI 陪聊服务。');
+		speak('AI 陪聊需要由子女为您开通会员。');
 		uni.showModal({
-			title: '会员专享',
-			content: '暖阳陪聊是会员专享功能，开通会员后可解锁无限次智能对话。',
-			confirmText: '去开通',
-			success: (res) => {
-				if (res.confirm) {
-					uni.navigateTo({ url: '/pages/vip/vip' });
-				}
-			}
+			title: '需要子女开通',
+			content: 'AI 陪聊是会员功能，请让子女在子女端为您开通会员后再使用。',
+			confirmText: '我知道了'
 		});
 		return;
 	}
@@ -144,11 +141,15 @@ onMounted(() => {
 	flex-shrink: 0;
 }
 
-.avatar-img {
-	width: 100%;
-	height: 100%;
+.avatar-circle {
+	width: 100rpx;
+	height: 100rpx;
 	border-radius: 50%;
 	background-color: #EBF3FF;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 48rpx;
 }
 
 .content {

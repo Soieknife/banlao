@@ -25,9 +25,9 @@
 					</view>
 				</view>
 				<view class="status-tags">
-					<text v-if="elder.status?.health?.steps >= 6000" class="tag success">步数达标</text>
 					<text v-if="elder.status?.health?.medication_taken === 1" class="tag success">今日已服药</text>
 					<text v-else class="tag warning">今日未服药</text>
+					<text class="tag info">待办提醒 {{ elder.status?.reminders?.length || 0 }}</text>
 				</view>
 			</view>
 		</view>
@@ -82,11 +82,16 @@ const handleLogout = () => {
 const bindElder = async () => {
 	if (!elderUsername.value) return;
 	try {
-		await request('/relation/bind', 'POST', { elder_username: elderUsername.value });
-		uni.showToast({ title: '绑定成功' });
+		const res = await request('/relation/request_bind', 'POST', { elder_username: elderUsername.value });
 		showBindModal.value = false;
+		const code = res.data.verify_code;
+		const expiresAt = res.data.expires_at;
 		elderUsername.value = '';
-		fetchElders();
+		uni.showModal({
+			title: '绑定申请已发送',
+			content: `请让老人打开“绑定确认”，输入验证码：${code}\n有效期至：${expiresAt}`,
+			confirmText: '我知道了'
+		});
 	} catch (err) {
 		uni.showToast({ title: err.message || '绑定失败', icon: 'none' });
 	}
@@ -187,7 +192,6 @@ onMounted(() => {
 	border-radius: 4px;
 	border: 1px solid #F5A623;
 }
-</style>
 
 .elder-card {
 	background-color: white;
@@ -251,6 +255,11 @@ onMounted(() => {
 .tag.warning {
 	background-color: #FFF5F5;
 	color: #E74C3C;
+}
+
+.tag.info {
+	background-color: #EBF3FF;
+	color: #4A90E2;
 }
 
 .modal-overlay {

@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const path = require('path');
 const responseHandler = require('./middleware/response');
 
 dotenv.config();
@@ -30,6 +31,9 @@ app.use('/api/health_record', require('./routes/health'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/relation', require('./routes/relation'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/medication', require('./routes/medication'));
+
+app.use('/admin', express.static(path.join(__dirname, 'admin-ui')));
 
 // 测试接口
 app.get('/api/health', (req, res) => {

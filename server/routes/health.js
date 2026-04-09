@@ -22,29 +22,11 @@ router.get('/today', auth, (req, res) => {
             const insertSql = `INSERT INTO health_records (user_id, steps, medication_taken, record_date) VALUES (?, 0, 0, ?)`;
             db.run(insertSql, [userId, today], function(err) {
                 if (err) return res.error(err.message, 500);
-                res.success({ id: this.lastID, steps: 0, medication_taken: 0, record_date: today });
+                res.success({ id: this.lastID, medication_taken: 0, record_date: today });
             });
         } else {
-            res.success(row);
+            res.success({ id: row.id, medication_taken: row.medication_taken, record_date: row.record_date });
         }
-    });
-});
-
-/**
- * 更新步数 API
- * @route POST /api/health/update_steps
- */
-router.post('/update_steps', auth, (req, res) => {
-    const { steps } = req.body;
-    const userId = req.user.id;
-    const today = new Date().toISOString().split('T')[0];
-
-    const sql = `UPDATE health_records SET steps = ? WHERE user_id = ? AND record_date = ?`;
-    db.run(sql, [steps, userId, today], function(err) {
-        if (err) {
-            return res.error(err.message, 500);
-        }
-        res.success(null, '步数更新成功');
     });
 });
 

@@ -31,6 +31,24 @@
 			"style": {
 				"navigationBarTitleText": "活动日志"
 			}
+		},
+		{
+			"path": "pages/reminder-manage/reminder-manage",
+			"style": {
+				"navigationBarTitleText": "提醒管理"
+			}
+		},
+		{
+			"path": "pages/emergency-settings/emergency-settings",
+			"style": {
+				"navigationBarTitleText": "紧急联系人"
+			}
+		},
+		{
+			"path": "pages/vip-purchase/vip-purchase",
+			"style": {
+				"navigationBarTitleText": "会员开通"
+			}
 		}
 	],
 	"globalStyle": {

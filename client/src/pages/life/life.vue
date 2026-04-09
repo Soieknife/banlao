@@ -19,6 +19,27 @@
 			</view>
 		</view>
 
+		<view class="text-title">我的子女</view>
+		<view v-if="childrenLoading" class="card-elder">
+			<view class="text-content">正在加载...</view>
+		</view>
+		<view v-else>
+			<view v-if="children.length === 0" class="card-elder">
+				<view class="text-content">暂无绑定的子女</view>
+				<view class="text-helper">请让子女在子女端发起绑定申请，然后在首页输入验证码确认。</view>
+			</view>
+			<view v-for="c in children" :key="c.id" class="card-elder child-card">
+				<view class="contact-info" @click="c.phone ? makeCall(c.phone) : null">
+					<text class="contact-name">{{ c.nickname || c.username }}</text>
+					<text class="contact-phone">{{ c.phone || '未填写电话' }}</text>
+				</view>
+				<view class="child-actions">
+					<view class="call-btn btn-elder small-btn" @click="c.phone ? makeCall(c.phone) : null">拨打</view>
+					<view class="unbind-btn" @click="removeChild(c)">解绑</view>
+				</view>
+			</view>
+		</view>
+
 		<!-- 常用电话列表 -->
 		<view class="text-title">常用电话</view>
 		<view v-for="contact in contacts" :key="contact.phone" class="card-elder contact-card" @click="makeCall(contact.phone)">
@@ -38,6 +59,8 @@ import { speak } from '../../utils/voice';
 
 const weather = ref({});
 const contacts = ref([]);
+const children = ref([]);
+const childrenLoading = ref(false);
 
 /**
  * 获取天气和联系人
@@ -57,6 +80,37 @@ const fetchData = async () => {
 	}
 };
 
+const fetchChildren = async () => {
+	childrenLoading.value = true;
+	try {
+		const res = await request('/relation/my_children');
+		children.value = res.data || [];
+	} catch (err) {
+		children.value = [];
+	} finally {
+		childrenLoading.value = false;
+	}
+};
+
+const removeChild = (c) => {
+	uni.showModal({
+		title: '解绑子女',
+		content: '确定要解绑该子女账号吗？解绑后对方将无法再查看或管理您的信息。',
+		confirmText: '确定解绑',
+		confirmColor: '#E74C3C',
+		success: async (res) => {
+			if (!res.confirm) return;
+			try {
+				await request('/relation/remove_child', 'POST', { child_id: c.id });
+				uni.showToast({ title: '解绑成功', icon: 'success' });
+				fetchChildren();
+			} catch (err) {
+				uni.showToast({ title: err.message || '解绑失败', icon: 'none' });
+			}
+		}
+	});
+};
+
 /**
  * 拨打电话
  * @param {string} phone - 电话号码
@@ -72,6 +126,7 @@ const makeCall = (phone) => {
 
 onMounted(() => {
 	fetchData();
+	fetchChildren();
 });
 </script>
 
@@ -126,6 +181,29 @@ onMounted(() => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+
+.child-card {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.child-actions {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+}
+
+.unbind-btn {
+	height: 80rpx;
+	line-height: 80rpx;
+	padding: 0 30rpx;
+	font-size: 32rpx;
+	border-radius: 16rpx;
+	background-color: #FFF5F5;
+	color: $warning-color;
+	border: 1rpx solid #FFDCDC;
 }
 
 .contact-name {

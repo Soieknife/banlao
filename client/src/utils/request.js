@@ -4,7 +4,7 @@
  * @param {string} method - 请求方法
  * @param {Object} data - 请求参数
  */
-const BASE_URL = 'http://localhost:3000/api';
+export const BASE_URL = 'http://localhost:3000/api';
 
 export const request = (url, method = 'GET', data = {}) => {
     const token = uni.getStorageSync('token');

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const settings = require('../utils/settings');
 
 /**
  * AI 聊天服务
@@ -8,8 +9,29 @@ class AIService {
     constructor() {
         // 留空 API Key，用户可在 .env 中配置
         this.apiKey = process.env.AI_API_KEY || '';
-        this.apiUrl = process.env.AI_API_URL || 'https://api.deepseek.com/v1/chat/completions'; // 默认使用 DeepSeek 接口
+        this.apiUrl = process.env.AI_API_URL || 'https://api.deepseek.com/v1/chat/completions';
         this.model = process.env.AI_MODEL || 'deepseek-chat';
+    }
+
+    async getConfig() {
+        const cfg = {
+            apiKey: this.apiKey,
+            apiUrl: this.apiUrl,
+            model: this.model
+        };
+
+        return new Promise((resolve) => {
+            settings.getSecret('AI_API_KEY', (err, val) => {
+                if (!err && val) cfg.apiKey = val;
+                settings.getSecret('AI_API_URL', (err2, val2) => {
+                    if (!err2 && val2) cfg.apiUrl = val2;
+                    settings.getSecret('AI_MODEL', (err3, val3) => {
+                        if (!err3 && val3) cfg.model = val3;
+                        resolve(cfg);
+                    });
+                });
+            });
+        });
     }
 
     /**
@@ -18,13 +40,14 @@ class AIService {
      * @returns {Promise<string>} AI 的回复
      */
     async chat(message) {
-        if (!this.apiKey) {
+        const cfg = await this.getConfig();
+        if (!cfg.apiKey) {
             return "AI 助手未配置 API Key，请联系管理员。";
         }
 
         try {
-            const response = await axios.post(this.apiUrl, {
-                model: this.model,
+            const response = await axios.post(cfg.apiUrl, {
+                model: cfg.model,
                 messages: [
                     {
                         role: "system",
@@ -38,7 +61,7 @@ class AIService {
                 stream: false
             }, {
                 headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Authorization': `Bearer ${cfg.apiKey}`,
                     'Content-Type': 'application/json'
                 }
             });

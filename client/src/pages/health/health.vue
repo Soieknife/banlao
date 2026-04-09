@@ -1,21 +1,8 @@
 <template>
 	<view class="page-container">
-		<!-- 步数统计卡片 -->
-		<view class="card-elder steps-card">
-			<view class="text-title">今日步数</view>
-			<view class="steps-main">
-				<text class="steps-num">{{ healthRecord.steps || 0 }}</text>
-				<text class="steps-unit">步</text>
-			</view>
-			<view class="steps-progress">
-				<progress :percent="progress" stroke-width="20" activeColor="#4A90E2" backgroundColor="#EBF3FF" />
-				<view class="text-helper">目标：6000 步</view>
-			</view>
-		</view>
-
 		<!-- 服药记录卡片 -->
 		<view class="card-elder medicine-card">
-			<view class="text-title">今日服药</view>
+			<view class="text-title">服药记录</view>
 			<view v-if="healthRecord.medication_taken === 0" class="medicine-status">
 				<text class="text-content">今天还没记录服药哦</text>
 				<button class="btn-elder" @click="takeMedicine">我已服药</button>
@@ -26,50 +13,35 @@
 			</view>
 		</view>
 
+		<view class="card-elder ocr-card" @click="openOcrTodo">
+			<view class="text-title">拍照识别药品说明书</view>
+			<view class="text-helper">拍照后自动提取：用法用量 / 功能主治 / 注意事项（开发中）</view>
+			<button class="btn-elder ghost-btn">开始拍照</button>
+		</view>
+
 		<!-- 子女同步提示 -->
 		<view class="card-elder info-card">
-			<view class="text-content">💡 您的步数和服药记录会自动同步给您的子女</view>
+			<view class="text-content">💡 服药记录会同步给您的子女，方便他们及时提醒您</view>
 		</view>
 	</view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
 
 const healthRecord = ref({});
-const targetSteps = 6000;
 
-/**
- * 获取今日记录
- */
 const fetchRecord = async () => {
 	try {
 		const res = await request('/health_record/today');
 		healthRecord.value = res.data;
-		
-		if (healthRecord.value.steps < 3000) {
-			speak('您今天走得有点少，有空可以出去散散步。');
-		} else if (healthRecord.value.steps >= targetSteps) {
-			speak('太棒了，您已达到今日步数目标！');
-		}
 	} catch (err) {
 		console.error('获取记录失败', err);
 	}
 };
 
-/**
- * 进度条百分比
- */
-const progress = computed(() => {
-	const steps = healthRecord.value.steps || 0;
-	return Math.min(Math.round((steps / targetSteps) * 100), 100);
-});
-
-/**
- * 标记已服药
- */
 const takeMedicine = async () => {
 	try {
 		await request('/health_record/take_medicine', 'POST');
@@ -81,44 +53,35 @@ const takeMedicine = async () => {
 	}
 };
 
+const openOcrTodo = () => {
+	uni.navigateTo({ url: '/pages/medication-ocr/medication-ocr' });
+};
+
 onMounted(() => {
 	fetchRecord();
-	// 实际开发可调用 uni.getWeRunData 获取真实步数
+	speak('这里可以记录您是否已经按时服药。');
 });
 </script>
 
 <style lang="scss" scoped>
-.steps-card {
-	text-align: center;
-	padding: 60rpx 40rpx;
+.medicine-card {
+	padding: 50rpx 40rpx;
 }
 
-.steps-main {
-	margin: 30rpx 0;
-}
-
-.steps-num {
-	font-size: 120rpx;
-	font-weight: bold;
-	color: $main-color;
-}
-
-.steps-unit {
-	font-size: 36rpx;
-	color: #666666;
-	margin-left: 10rpx;
-}
-
-.steps-progress {
-	margin-top: 40rpx;
-	.text-helper {
-		margin-top: 20rpx;
-		display: block;
+.ocr-card {
+	margin-top: 30rpx;
+	padding: 50rpx 40rpx;
+	background-color: #EBF3FF;
+	border: none;
+	.text-title, .text-helper {
+		color: $main-color;
 	}
 }
 
-.medicine-card {
-	padding: 50rpx 40rpx;
+.ghost-btn {
+	margin-top: 30rpx;
+	background-color: #FFFFFF;
+	color: $main-color;
 }
 
 .medicine-status {

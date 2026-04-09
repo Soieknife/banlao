@@ -30,7 +30,13 @@
 		{
 			"path": "pages/health/health",
 			"style": {
-				"navigationBarTitleText": "健康记录"
+				"navigationBarTitleText": "服药记录"
+			}
+		},
+		{
+			"path": "pages/medication-ocr/medication-ocr",
+			"style": {
+				"navigationBarTitleText": "说明书识别"
 			}
 		},
 		{
@@ -46,9 +52,45 @@
 			}
 		},
 		{
-			"path": "pages/vip/vip",
+			"path": "pages/bind-requests/bind-requests",
 			"style": {
-				"navigationBarTitleText": "开通会员"
+				"navigationBarTitleText": "绑定确认"
+			}
+		},
+		{
+			"path": "pages/child/index/index",
+			"style": {
+				"navigationBarTitleText": "子女守护"
+			}
+		},
+		{
+			"path": "pages/child/elder-status/elder-status",
+			"style": {
+				"navigationBarTitleText": "长辈状态"
+			}
+		},
+		{
+			"path": "pages/child/reminder-manage/reminder-manage",
+			"style": {
+				"navigationBarTitleText": "提醒管理"
+			}
+		},
+		{
+			"path": "pages/child/emergency-settings/emergency-settings",
+			"style": {
+				"navigationBarTitleText": "紧急联系人"
+			}
+		},
+		{
+			"path": "pages/child/vip-purchase/vip-purchase",
+			"style": {
+				"navigationBarTitleText": "会员开通"
+			}
+		},
+		{
+			"path": "pages/child/activity-logs/activity-logs",
+			"style": {
+				"navigationBarTitleText": "活动日志"
 			}
 		}
 	],
