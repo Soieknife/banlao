@@ -33,7 +33,9 @@
 				<button class="btn-elder compact-btn" @click="openBind">绑定长辈</button>
 			</view>
 
-			<view v-if="loading" class="text-helper">加载中...</view>
+			<view v-if="loading" class="loading-state">
+				<text>加载中...</text>
+			</view>
 			<view v-else-if="elders.length === 0" class="empty-state">
 				<view class="text-content">还没有绑定长辈</view>
 				<view class="text-helper">发起绑定申请后，让长辈输入验证码确认即可。</view>
@@ -95,7 +97,7 @@
 			<view class="modal card-elder">
 				<view class="text-title">绑定长辈账号</view>
 				<view class="text-helper">输入长辈用户名，系统会生成验证码，长辈在同一个应用里确认即可。</view>
-				<input v-model="elderUsername" class="bind-input" placeholder="请输入长辈用户名" />
+				<input v-model="elderUsername" class="input-elder" placeholder="请输入长辈用户名" />
 				<view class="modal-actions">
 					<button class="btn-elder light-btn" @click="showBindModal = false">取消</button>
 					<button class="btn-elder" @click="requestBind">发起绑定</button>
@@ -265,13 +267,12 @@ onShow(() => {
 }
 
 .hero {
-	background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
-	border: 2rpx solid #d9e9ff;
+	background: linear-gradient(135deg, $card-bg 0%, $main-color-light 100%);
+	border: $border-width solid $main-color-light;
 }
 
 .hero-top,
 .section-head,
-.bind-row,
 .modal-actions,
 .elder-card,
 .elder-main {
@@ -293,94 +294,47 @@ onShow(() => {
 }
 
 .hero-actions {
-	gap: 16rpx;
-	margin-top: 26rpx;
-}
-
-.small-btn {
-	height: 84rpx;
-	line-height: 84rpx;
-	font-size: 30rpx;
-}
-
-.compact-btn {
-	height: 82rpx;
-	line-height: 82rpx;
-	font-size: 28rpx;
-	padding: 0 28rpx;
-}
-
-.light-btn {
-	background-color: #f2f6fb;
-	color: #345;
-	box-shadow: none;
+	gap: $spacing-sm;
+	margin-top: $spacing-sm;
 }
 
 .hero-chip {
-	padding: 10rpx 20rpx;
-	border-radius: 999rpx;
-	font-size: 24rpx;
-	font-weight: bold;
-	background-color: #fff5e6;
+	padding: $spacing-xs $spacing-sm;
+	border-radius: $radius-circle;
+	font-size: $font-size-xs;
+	font-weight: $font-weight-bold;
+	background-color: $secondary-color-light;
 	color: $secondary-color;
 }
 
-.bind-card {
-	border-left: 10rpx solid $secondary-color;
-}
-
-.bind-row,
-.modal-actions,
-.elder-main {
-	gap: 16rpx;
-}
-
-.bind-input {
-	flex: 1;
-	height: 90rpx;
-	border-radius: 16rpx;
-	border: 2rpx solid #d7deea;
-	background-color: #fff;
-	padding: 0 20rpx;
-	font-size: 32rpx;
-}
-
-.inline-link {
-	margin-top: 16rpx;
-	display: inline-block;
-	font-size: 26rpx;
-	color: $main-color;
-	text-decoration: underline;
-}
-
-.empty-state {
-	padding: 30rpx 0 10rpx;
-	text-align: center;
-}
-
 .elder-list {
-	gap: 18rpx;
-	margin-top: 24rpx;
+	gap: $spacing-sm;
+	margin-top: $spacing-sm;
 }
 
 .elder-card {
-	padding: 26rpx;
-	border-radius: 20rpx;
-	background-color: #f8fbff;
-	gap: 20rpx;
+	padding: $spacing-base;
+	border-radius: $radius-base;
+	background-color: $card-bg-alt;
+	gap: $spacing-sm;
+	transition: all $transition-base;
+	
+	&:active {
+		background-color: $input-bg;
+	}
 }
 
 .avatar {
 	width: 88rpx;
 	height: 88rpx;
-	border-radius: 44rpx;
-	background-color: #ebf3ff;
+	border-radius: 50%;
+	background-color: $main-color-light;
 	color: $main-color;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 36rpx;
-	font-weight: bold;
+	font-size: $font-size-base;
+	font-weight: $font-weight-bold;
 }
 
 .elder-info {
@@ -388,109 +342,23 @@ onShow(() => {
 }
 
 .elder-name {
-	font-size: 34rpx;
-	font-weight: bold;
-	color: #333;
-	margin-bottom: 8rpx;
+	font-size: $font-size-base;
+	font-weight: $font-weight-bold;
+	color: $text-primary;
+	margin-bottom: $spacing-xs;
 }
 
 .elder-tags {
-	gap: 10rpx;
+	gap: $spacing-xs;
 	align-items: flex-end;
 }
 
-.tag {
-	font-size: 22rpx;
-	padding: 6rpx 14rpx;
-	border-radius: 14rpx;
-	background-color: #f5f7fa;
-	color: #666;
-}
-
-.tag.vip {
-	background-color: #fff5e6;
-	color: $secondary-color;
-}
-
-.tag.free {
-	background-color: #f0f0f0;
-	color: #999;
-}
-
-.tag.info {
-	background-color: #ebf3ff;
-	color: $main-color;
-}
-
-.tag.ok {
-	background-color: #e7f9ee;
-	color: #2ecc71;
-}
-
-.tag.warn {
-	background-color: #fff1f1;
-	color: $warning-color;
-}
-
-.grid-container {
-	display: flex;
-	flex-wrap: wrap;
+.modal-actions {
+	flex-direction: row;
 	justify-content: space-between;
-	gap: 22rpx 0;
 }
 
-.grid-item {
-	width: 48%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	text-align: center;
-	padding: 40rpx 20rpx;
-	box-sizing: border-box;
-}
-
-.icon-wrap {
-	width: 120rpx;
-	height: 120rpx;
-	background-color: #ebf3ff;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 20rpx;
-}
-
-.grid-emoji {
-	font-size: 60rpx;
-	line-height: 1;
-}
-
-.emergency-btn {
-	width: 100%;
-	background-color: #fff5f5;
-	border: 2rpx solid #ffdcdc;
-}
-
-.emergency-btn .icon-wrap {
-	background-color: #ffe5e5;
-}
-
-.emergency-btn .text-title {
-	color: $warning-color;
-}
-
-.modal-overlay {
-	position: fixed;
-	inset: 0;
-	background-color: rgba(0, 0, 0, 0.45);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 30rpx;
-	z-index: 100;
-}
-
-.modal {
-	width: 100%;
+.modal-actions button {
+	flex: 1;
 }
 </style>

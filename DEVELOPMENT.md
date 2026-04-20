@@ -149,6 +149,9 @@ SQLite 文件位置（仅本地兜底）: `server/database.sqlite`
   - `/pages/health/health` 服药记录
   - `/pages/medication-ocr/medication-ocr` 说明书拍照识别
   - `/pages/ai/ai` AI 陪聊（会员可用）
+  - `/pages/life/life` 生活查询
+  - `/pages/profile/profile` 个人信息
+  - `/pages/bind-requests/bind-requests` 绑定确认
 - 子女能力页面：
   - `/pages/child/index/index` 兼容旧链接，自动跳转到统一首页
   - `/pages/child/elder-status/elder-status` 长辈状态
@@ -202,8 +205,14 @@ AI_MODEL=deepseek-chat
 
 ### 启动步骤
 1. **安装依赖**: 分别在 `server`, `client` 执行 `npm install`。
-2. **启动后端**: `cd server && npm run dev`
-3. **启动前端**: `cd client && npm run dev:h5`
+2. **启动后端**: `cd server && npm run dev` (服务端运行在 http://localhost:3000)
+3. **启动前端**: `cd client && npm run dev:h5` (客户端开发服务器运行在 http://localhost:5174/，端口可能会根据可用性自动调整)
+
+### 跨域配置
+服务端已配置 CORS 支持，允许来自任何来源的请求，包括本地开发环境。配置如下：
+- `origin: '*'` - 允许所有来源的请求
+- `credentials: true` - 允许携带凭证信息
+- `helmet` 中间件配置为 `crossOriginResourcePolicy: { policy: "cross-origin" }` - 确保资源可以跨域访问
 
 ### SQLite 迁移到 Postgres
 当你已经在本地 SQLite 里有测试数据，并希望迁移到云 Postgres 时：

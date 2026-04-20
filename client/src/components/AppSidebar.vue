@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
 	activePath: {
@@ -46,6 +46,7 @@ const props = defineProps({
 
 const visible = ref(false);
 
+// 导航项配置
 const navItems = [
 	{ path: '/pages/index/index', icon: '🏠', label: '首页', desc: '回到主功能入口' },
 	{ path: '/pages/ai/ai', icon: '🤖', label: '暖阳陪聊', desc: '随时说说话' },
@@ -56,22 +57,31 @@ const navItems = [
 	{ path: '/pages/profile/profile', icon: '👤', label: '个人信息', desc: '修改手机号和查看家人' }
 ];
 
+// 切换侧边栏
 const toggleDrawer = () => {
 	visible.value = !visible.value;
 };
 
+// 关闭侧边栏
 const closeDrawer = () => {
 	visible.value = false;
 };
 
+// 跳转到指定页面
 const goTo = (path) => {
 	closeDrawer();
 	if (path === props.activePath) return;
-	if (path === '/pages/index/index') {
-		uni.reLaunch({ url: path });
-		return;
+	
+	try {
+		if (path === '/pages/index/index') {
+			uni.reLaunch({ url: path });
+		} else {
+			uni.navigateTo({ url: path });
+		}
+	} catch (error) {
+		console.error('导航失败:', error);
+		uni.showToast({ title: '导航失败', icon: 'none' });
 	}
-	uni.navigateTo({ url: path });
 };
 </script>
 
@@ -82,19 +92,25 @@ const goTo = (path) => {
 	top: 120rpx;
 	width: 92rpx;
 	height: 92rpx;
-	border-radius: 28rpx;
-	background: linear-gradient(135deg, #4A90E2, #6FAEF2);
-	box-shadow: 0 12rpx 36rpx rgba(74, 144, 226, 0.25);
+	border-radius: $radius-btn;
+	background: linear-gradient(135deg, $main-color, #6FAEF2);
+	box-shadow: $shadow-lg;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 90;
+	transition: all $transition-base;
+	
+	&:active {
+		transform: scale(0.95);
+		box-shadow: $shadow-base;
+	}
 }
 
 .trigger-icon {
 	font-size: 42rpx;
-	color: #fff;
-	font-weight: bold;
+	color: $text-inverse;
+	font-weight: $font-weight-bold;
 }
 
 .sidebar-mask {
@@ -102,6 +118,7 @@ const goTo = (path) => {
 	inset: 0;
 	background-color: rgba(15, 23, 42, 0.32);
 	z-index: 98;
+	transition: background-color $transition-base;
 }
 
 .sidebar-panel {
@@ -110,12 +127,32 @@ const goTo = (path) => {
 	right: 0;
 	bottom: 0;
 	width: 560rpx;
-	background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+	background: linear-gradient(180deg, $card-bg-alt 0%, $card-bg 100%);
 	padding: 48rpx 28rpx 32rpx;
 	box-shadow: -18rpx 0 48rpx rgba(15, 23, 42, 0.12);
 	transform: translateX(100%);
-	transition: transform 0.25s ease;
+	transition: transform $transition-base;
 	z-index: 99;
+	overflow-y: auto;
+	
+	// 滚动条样式
+	&::-webkit-scrollbar {
+		width: 6rpx;
+	}
+	
+	&::-webkit-scrollbar-track {
+		background: $input-bg;
+		border-radius: $radius-circle;
+	}
+	
+	&::-webkit-scrollbar-thumb {
+		background: $border-color;
+		border-radius: $radius-circle;
+	}
+	
+	&::-webkit-scrollbar-thumb:hover {
+		background: $text-tertiary;
+	}
 }
 
 .sidebar-panel.visible {
@@ -126,19 +163,21 @@ const goTo = (path) => {
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	margin-bottom: 30rpx;
+	margin-bottom: $spacing-base;
+	padding-bottom: $spacing-sm;
+	border-bottom: $border-width solid $border-color;
 }
 
 .title {
-	font-size: 40rpx;
-	font-weight: bold;
-	color: #22324d;
+	font-size: $font-size-lg;
+	font-weight: $font-weight-bold;
+	color: $text-primary;
 }
 
 .subtitle {
-	margin-top: 8rpx;
-	font-size: 26rpx;
-	color: #6b7a90;
+	margin-top: $spacing-xs;
+	font-size: $font-size-sm;
+	color: $text-tertiary;
 }
 
 .close-icon {
@@ -147,35 +186,47 @@ const goTo = (path) => {
 	line-height: 64rpx;
 	text-align: center;
 	font-size: 48rpx;
-	color: #7b8798;
+	color: $text-tertiary;
+	transition: all $transition-base;
+	
+	&:active {
+		transform: scale(0.9);
+		color: $text-secondary;
+	}
 }
 
 .nav-list {
 	display: flex;
 	flex-direction: column;
-	gap: 16rpx;
+	gap: $spacing-sm;
 }
 
 .nav-item {
 	display: flex;
 	align-items: center;
 	gap: 18rpx;
-	padding: 22rpx 20rpx;
-	border-radius: 24rpx;
+	padding: $spacing-base $spacing-sm;
+	border-radius: $radius-base;
 	background-color: rgba(255, 255, 255, 0.9);
-	border: 2rpx solid #e7eef8;
+	border: $border-width solid $border-color;
+	transition: all $transition-base;
+	
+	&:active {
+		transform: scale(0.98);
+		background-color: $input-bg;
+	}
 }
 
 .nav-item.active {
-	background: linear-gradient(135deg, #edf5ff 0%, #fff8ea 100%);
-	border-color: #bed7ff;
+	background: linear-gradient(135deg, $main-color-light 0%, $secondary-color-light 100%);
+	border-color: $main-color-light;
 }
 
 .nav-emoji {
 	width: 76rpx;
 	height: 76rpx;
-	border-radius: 22rpx;
-	background-color: #eef5ff;
+	border-radius: $radius-base;
+	background-color: $main-color-light;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -188,14 +239,14 @@ const goTo = (path) => {
 }
 
 .nav-title {
-	font-size: 30rpx;
-	font-weight: bold;
-	color: #1f2937;
+	font-size: $font-size-base;
+	font-weight: $font-weight-bold;
+	color: $text-primary;
 }
 
 .nav-desc {
-	margin-top: 6rpx;
-	font-size: 24rpx;
-	color: #708090;
+	margin-top: $spacing-xs;
+	font-size: $font-size-xs;
+	color: $text-tertiary;
 }
 </style>

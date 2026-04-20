@@ -10,22 +10,70 @@
  * 暖阳陪伴 - 适老化主题变量
  */
 
-// 颜色
-$main-color: #4A90E2; // 主色
-$secondary-color: #F5A623; // 辅助色
-$warning-color: #E74C3C; // 警示色
-$bg-color: #F8F9FA; // 背景色
-$card-bg: #FFFFFF; // 卡片背景
+// 颜色系统
+$main-color: #4A90E2; // 主色 - 温暖蓝色
+$main-color-light: #EBF3FF; // 主色浅色
+$main-color-dark: #357ABD; // 主色深色
+$secondary-color: #F5A623; // 辅助色 - 温暖橙色
+$secondary-color-light: #FFF5E6; // 辅助色浅色
+$warning-color: #E74C3C; // 警示色 - 红色
+$warning-color-light: #FFF1F1; // 警示色浅色
+$success-color: #2ECC71; // 成功色 - 绿色
+$success-color-light: #E7F9EE; // 成功色浅色
+$info-color: #3498DB; // 信息色 - 蓝色
+$info-color-light: #EBF5FF; // 信息色浅色
+
+// 背景颜色
+$bg-color: #F8F9FA; // 页面背景色
+$card-bg: #FFFFFF; // 卡片背景色
+$card-bg-alt: #F8FBFF; // 卡片背景色（替代）
+$input-bg: #F9FAFB; // 输入框背景色
+
+// 文字颜色
+$text-primary: #333333; // 主要文字
+$text-secondary: #666666; // 次要文字
+$text-tertiary: #999999; // 辅助文字
+$text-inverse: #FFFFFF; // 反色文字
 
 // 字体大小 (适老化标准)
+$font-size-xs: 24rpx;   // 约12px，对应最小辅助文字
+$font-size-sm: 28rpx;   // 约14px，对应辅助文字
 $font-size-base: 36rpx; // 约18px，对应正文
 $font-size-lg: 44rpx;   // 约22px，对应标题
-$font-size-sm: 28rpx;   // 约14px，对应辅助文字
+$font-size-xl: 52rpx;   // 约26px，对应大标题
 
-// 间距与圆角
+// 字体重量
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-bold: 700;
+
+// 间距系统
+$spacing-xs: 10rpx;
+$spacing-sm: 16rpx;
 $spacing-base: 30rpx;
+$spacing-lg: 40rpx;
+$spacing-xl: 50rpx;
+
+// 圆角系统
+$radius-sm: 8rpx;
+$radius-base: 16rpx;
 $radius-card: 24rpx;    // 12px
 $radius-btn: 32rpx;     // 16px
+$radius-circle: 9999rpx;
 
 // 点击区域
 $min-touch-area: 88rpx; // 44px
+
+// 阴影系统
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+$shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+
+// 边框
+$border-color: #E5E7EB;
+$border-width: 2rpx;
+
+// 动画
+$transition-fast: 0.15s ease;
+$transition-base: 0.25s ease;
+$transition-slow: 0.35s ease;
