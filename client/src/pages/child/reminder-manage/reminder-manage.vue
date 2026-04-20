@@ -23,6 +23,8 @@
 				<view class="row">
 					<view>
 						<view class="text-title">{{ item.title }}</view>
+						<view v-if="item.type === 'medicine' && item.medication_name" class="text-helper med-name">药品：{{ item.medication_name }}</view>
+						<view v-if="item.type === 'medicine' && item.dosage_note" class="text-helper">服用说明：{{ item.dosage_note }}</view>
 						<view class="text-helper">{{ formatRule(item) }}</view>
 					</view>
 					<view class="tag" :class="item.type">{{ item.type === 'medicine' ? '用药' : '日常' }}</view>
@@ -42,6 +44,11 @@
 
 				<input v-model="form.title" class="input" placeholder="提醒标题（如：吃降压药）" />
 				<input v-model="form.content" class="input" placeholder="备注（可选）" />
+
+				<view v-if="form.type==='medicine'">
+					<input v-model="form.medication_name" class="input" placeholder="药品名称（如：阿托伐他汀）" />
+					<input v-model="form.dosage_note" class="input" placeholder="服用说明（如：晚饭后 1 片）" />
+				</view>
 
 				<view class="row-inline">
 					<view class="label">类型</view>
@@ -109,6 +116,8 @@ const weekDays = [
 const form = ref({
 	title: '',
 	content: '',
+	medication_name: '',
+	dosage_note: '',
 	type: 'medicine',
 	time: '',
 	repeat_type: 'daily',
@@ -166,7 +175,7 @@ const formatWeekDays = (daysStr) => {
 const openCreate = () => {
 	isEditing.value = false;
 	editingId.value = null;
-	form.value = { title: '', content: '', type: 'medicine', time: '', repeat_type: 'daily', repeat_days: [] };
+	form.value = { title: '', content: '', medication_name: '', dosage_note: '', type: 'medicine', time: '', repeat_type: 'daily', repeat_days: [] };
 	showModal.value = true;
 };
 
@@ -177,6 +186,8 @@ const openEdit = (item) => {
 	form.value = {
 		title: item.title || '',
 		content: item.content || '',
+		medication_name: item.medication_name || '',
+		dosage_note: item.dosage_note || '',
 		type: item.type || 'medicine',
 		time: t,
 		repeat_type: item.repeat_type || 'once',
@@ -213,6 +224,8 @@ const submit = async () => {
 	const payload = {
 		title: form.value.title,
 		content: form.value.content,
+		medication_name: form.value.type === 'medicine' ? form.value.medication_name : '',
+		dosage_note: form.value.type === 'medicine' ? form.value.dosage_note : '',
 		type: form.value.type,
 		remind_time: form.value.time,
 		user_id: elderId.value,
@@ -261,6 +274,8 @@ const toggleEnabled = async (item) => {
 		await request(`/reminder/update/${item.id}`, 'POST', {
 			title: item.title,
 			content: item.content,
+			medication_name: item.medication_name || '',
+			dosage_note: item.dosage_note || '',
 			type: item.type,
 			remind_time: item.remind_time,
 			repeat_type: item.repeat_type || 'once',
@@ -315,6 +330,10 @@ const toggleEnabled = async (item) => {
 
 .tag.daily {
 	background-color: #EBF3FF;
+	color: $main-color;
+}
+
+.med-name {
 	color: $main-color;
 }
 
@@ -464,4 +483,3 @@ const toggleEnabled = async (item) => {
 	margin-top: 24rpx;
 }
 </style>
-

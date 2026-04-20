@@ -102,4 +102,51 @@ router.get('/profile', require('../middleware/auth'), (req, res) => {
     });
 });
 
+router.post('/profile/update', require('../middleware/auth'), (req, res) => {
+    const { nickname, phone, emergency_contact, emergency_phone, password } = req.body || {};
+    const updates = [];
+    const values = [];
+
+    if (typeof nickname === 'string') {
+        updates.push('nickname = ?');
+        values.push(nickname.trim());
+    }
+    if (typeof phone === 'string') {
+        updates.push('phone = ?');
+        values.push(phone.trim());
+    }
+    if (typeof emergency_contact === 'string') {
+        updates.push('emergency_contact = ?');
+        values.push(emergency_contact.trim());
+    }
+    if (typeof emergency_phone === 'string') {
+        updates.push('emergency_phone = ?');
+        values.push(emergency_phone.trim());
+    }
+    if (typeof password === 'string' && password.trim()) {
+        if (password.trim().length < 6) {
+            return res.error('密码长度至少 6 位', 400);
+        }
+        updates.push('password = ?');
+        values.push(bcrypt.hashSync(password.trim(), 10));
+    }
+
+    if (!updates.length) {
+        return res.error('没有可更新的内容', 400);
+    }
+
+    values.push(req.user.id);
+    db.run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values, function(err) {
+        if (err) return res.error(err.message, 500);
+        db.get(
+            `SELECT id, username, role, nickname, phone, avatar, emergency_contact, emergency_phone, is_vip, vip_expire FROM users WHERE id = ?`,
+            [req.user.id],
+            (e2, user) => {
+                if (e2) return res.error(e2.message, 500);
+                res.success(user, '个人信息已更新');
+            }
+        );
+    });
+});
+
 module.exports = router;

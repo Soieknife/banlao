@@ -1,5 +1,7 @@
 <template>
 	<view class="page-container">
+		<AppSidebar active-path="/pages/life/life" />
+
 		<!-- 天气卡片 -->
 		<view class="card-elder weather-card">
 			<view class="weather-header">
@@ -26,7 +28,7 @@
 		<view v-else>
 			<view v-if="children.length === 0" class="card-elder">
 				<view class="text-content">暂无绑定的子女</view>
-				<view class="text-helper">请让子女在子女端发起绑定申请，然后在首页输入验证码确认。</view>
+				<view class="text-helper">请让家人发起绑定申请，然后在首页输入验证码确认。</view>
 			</view>
 			<view v-for="c in children" :key="c.id" class="card-elder child-card">
 				<view class="contact-info" @click="c.phone ? makeCall(c.phone) : null">
@@ -56,6 +58,7 @@
 import { ref, onMounted } from 'vue';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
+import AppSidebar from '../../components/AppSidebar.vue';
 
 const weather = ref({});
 const contacts = ref([]);

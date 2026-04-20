@@ -1,5 +1,7 @@
 <template>
 	<view class="page-container ai-chat-page">
+		<AppSidebar active-path="/pages/ai/ai" />
+
 		<!-- 聊天记录 -->
 		<scroll-view scroll-y class="chat-history" :scroll-into-view="lastMsgId">
 			<view v-for="(msg, index) in messages" :key="index" :id="'msg-' + index" class="chat-item" :class="msg.role">
@@ -32,6 +34,7 @@
 import { ref, onMounted, nextTick } from 'vue';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
+import AppSidebar from '../../components/AppSidebar.vue';
 
 const messages = ref([
 	{ role: 'ai', text: '您好，我是暖阳，您可以随时跟我聊天。' }
@@ -48,7 +51,7 @@ const startVoice = () => {
 		speak('AI 陪聊需要由子女为您开通会员。');
 		uni.showModal({
 			title: '需要子女开通',
-			content: 'AI 陪聊是会员功能，请让子女在子女端为您开通会员后再使用。',
+			content: 'AI 陪聊是会员功能，请让家人为您开通会员后再使用。',
 			confirmText: '我知道了'
 		});
 		return;

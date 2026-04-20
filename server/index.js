@@ -2,14 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
 const path = require('path');
 const responseHandler = require('./middleware/response');
-
-dotenv.config();
+const config = require('./config');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.server.port;
 
 /**
  * 后端入口程序

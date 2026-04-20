@@ -156,7 +156,7 @@ router.get('/emergency_calls', auth, isAdmin, (req, res) => {
 
 router.get('/medication_ocr_records', auth, isAdmin, (req, res) => {
     const sql = `
-        SELECT m.id, m.user_id, m.image_hash, m.created_at, substr(m.elder_summary, 1, 180) as elder_summary, u.username as user_username, u.nickname as user_nickname
+        SELECT m.id, m.user_id, m.image_hash, m.ocr_provider, m.parse_status, m.parse_method, m.created_at, substr(m.elder_summary, 1, 180) as elder_summary, u.username as user_username, u.nickname as user_nickname
         FROM medication_ocr_records m
         JOIN users u ON u.id = m.user_id
         ORDER BY m.created_at DESC
@@ -165,6 +165,39 @@ router.get('/medication_ocr_records', auth, isAdmin, (req, res) => {
     db.all(sql, [], (err, rows) => {
         if (err) return res.error(err.message, 500);
         res.success(rows || []);
+    });
+});
+
+router.get('/medication_ocr_record/:id', auth, isAdmin, (req, res) => {
+    const sql = `
+        SELECT m.*, u.username as user_username, u.nickname as user_nickname
+        FROM medication_ocr_records m
+        JOIN users u ON u.id = m.user_id
+        WHERE m.id = ?
+        LIMIT 1
+    `;
+    db.get(sql, [req.params.id], (err, row) => {
+        if (err) return res.error(err.message, 500);
+        if (!row) return res.error('记录不存在', 404);
+        let extracted = null;
+        try {
+            extracted = row.extracted_json ? JSON.parse(row.extracted_json) : null;
+        } catch (e) {}
+        res.success({
+            id: row.id,
+            user_id: row.user_id,
+            user_username: row.user_username,
+            user_nickname: row.user_nickname,
+            image_hash: row.image_hash,
+            ocr_provider: row.ocr_provider || '',
+            raw_text: row.raw_text,
+            extracted,
+            elder_summary: row.elder_summary,
+            parse_status: row.parse_status || '',
+            parse_method: row.parse_method || '',
+            parse_error: row.parse_error || '',
+            created_at: row.created_at
+        });
     });
 });
 

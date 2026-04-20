@@ -91,6 +91,8 @@ function initSqliteTables(db) {
             user_id INTEGER,
             title TEXT,
             content TEXT,
+            medication_name TEXT,
+            dosage_note TEXT,
             remind_time TEXT,
             status INTEGER DEFAULT 0,
             type TEXT,
@@ -149,9 +151,13 @@ function initSqliteTables(db) {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             image_hash TEXT,
+            ocr_provider TEXT,
             raw_text TEXT,
             extracted_json TEXT,
             elder_summary TEXT,
+            parse_status TEXT,
+            parse_method TEXT,
+            parse_error TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
@@ -159,6 +165,8 @@ function initSqliteTables(db) {
         sqliteEnsureColumn(db, 'users', 'vip_expire', 'DATETIME');
         sqliteEnsureColumn(db, 'relations', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         sqliteEnsureColumn(db, 'reminders', 'created_by', 'INTEGER');
+        sqliteEnsureColumn(db, 'reminders', 'medication_name', 'TEXT');
+        sqliteEnsureColumn(db, 'reminders', 'dosage_note', 'TEXT');
         sqliteEnsureColumn(db, 'reminders', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         sqliteEnsureColumn(db, 'reminders', 'repeat_type', 'TEXT');
         sqliteEnsureColumn(db, 'reminders', 'repeat_days', 'TEXT');
@@ -172,9 +180,13 @@ function initSqliteTables(db) {
         sqliteEnsureColumn(db, 'app_settings', 'value_enc', 'TEXT');
         sqliteEnsureColumn(db, 'app_settings', 'updated_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         sqliteEnsureColumn(db, 'medication_ocr_records', 'image_hash', 'TEXT');
+        sqliteEnsureColumn(db, 'medication_ocr_records', 'ocr_provider', 'TEXT');
         sqliteEnsureColumn(db, 'medication_ocr_records', 'raw_text', 'TEXT');
         sqliteEnsureColumn(db, 'medication_ocr_records', 'extracted_json', 'TEXT');
         sqliteEnsureColumn(db, 'medication_ocr_records', 'elder_summary', 'TEXT');
+        sqliteEnsureColumn(db, 'medication_ocr_records', 'parse_status', 'TEXT');
+        sqliteEnsureColumn(db, 'medication_ocr_records', 'parse_method', 'TEXT');
+        sqliteEnsureColumn(db, 'medication_ocr_records', 'parse_error', 'TEXT');
         sqliteEnsureColumn(db, 'medication_ocr_records', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
 
         db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_relations_elder_child ON relations(elder_id, child_id)`);
@@ -335,6 +347,8 @@ async function initPostgresSchema(db) {
         user_id BIGINT,
         title TEXT,
         content TEXT,
+        medication_name TEXT,
+        dosage_note TEXT,
         remind_time TEXT,
         status INTEGER DEFAULT 0,
         type TEXT,
@@ -393,9 +407,13 @@ async function initPostgresSchema(db) {
         id BIGSERIAL PRIMARY KEY,
         user_id BIGINT,
         image_hash TEXT,
+        ocr_provider TEXT,
         raw_text TEXT,
         extracted_json TEXT,
         elder_summary TEXT,
+        parse_status TEXT,
+        parse_method TEXT,
+        parse_error TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 
@@ -403,6 +421,8 @@ async function initPostgresSchema(db) {
     await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_expire TIMESTAMPTZ`);
     await db.run(`ALTER TABLE relations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS created_by BIGINT`);
+    await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS medication_name TEXT`);
+    await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS dosage_note TEXT`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS repeat_type TEXT`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS repeat_days TEXT`);
@@ -413,9 +433,13 @@ async function initPostgresSchema(db) {
     await db.run(`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS value_enc TEXT`);
     await db.run(`ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
     await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS image_hash TEXT`);
+    await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS ocr_provider TEXT`);
     await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS raw_text TEXT`);
     await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS extracted_json TEXT`);
     await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS elder_summary TEXT`);
+    await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS parse_status TEXT`);
+    await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS parse_method TEXT`);
+    await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS parse_error TEXT`);
     await db.run(`ALTER TABLE medication_ocr_records ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
 
     await db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_relations_elder_child ON relations(elder_id, child_id)`);

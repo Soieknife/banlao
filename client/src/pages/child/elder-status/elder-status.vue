@@ -137,7 +137,7 @@ const unbind = () => {
 				await request('/relation/unbind', 'POST', { elder_id: elderId.value });
 				uni.showToast({ title: '解绑成功', icon: 'success' });
 				setTimeout(() => {
-					uni.reLaunch({ url: '/pages/child/index/index' });
+					uni.reLaunch({ url: '/pages/index/index' });
 				}, 800);
 			} catch (err) {
 				uni.showToast({ title: err.message || '解绑失败', icon: 'none' });

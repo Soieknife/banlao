@@ -18,16 +18,18 @@
       </div>
 
       <div class="grid">
+        <!-- 概览卡片 -->
         <div class="card">
-          <div class="card-title">概览</div>
+          <div class="card-title">系统概览</div>
           <div class="card-actions">
             <button id="loadOverview">刷新</button>
           </div>
           <pre id="overview" class="pre"></pre>
         </div>
 
+        <!-- 设置中心 -->
         <div class="card">
-          <div class="card-title">设置中心（密钥加密存储）</div>
+          <div class="card-title">设置中心</div>
           <div class="hint">需要后端配置 SETTINGS_ENCRYPTION_KEY（base64 32 bytes）才能保存密钥。</div>
           <div class="settings-form">
             <input id="setKey" placeholder="key（如 AI_API_KEY / BAIDU_OCR_API_KEY）" />
@@ -40,17 +42,54 @@
           <pre id="settings" class="pre"></pre>
         </div>
 
+        <!-- 用户管理 -->
+        <div class="card">
+          <div class="card-title">用户管理</div>
+          <div class="card-actions">
+            <button data-endpoint="users">查看用户</button>
+            <button id="setVipBtn" class="ghost">设置VIP</button>
+          </div>
+          <div class="settings-form" id="vipForm" style="display: none;">
+            <input id="vipUserId" placeholder="用户ID" />
+            <input id="vipDays" placeholder="天数" />
+            <button id="confirmVipBtn">确认设置</button>
+          </div>
+          <pre id="userData" class="pre"></pre>
+        </div>
+
+        <!-- 数据查看 -->
         <div class="card">
           <div class="card-title">数据查看</div>
           <div class="card-actions">
-            <button data-endpoint="users">用户</button>
-            <button data-endpoint="relations" class="ghost">关系</button>
+            <button data-endpoint="relations">关系</button>
             <button data-endpoint="bind_requests" class="ghost">绑定申请</button>
             <button data-endpoint="emergency_calls" class="ghost">紧急呼救</button>
             <button data-endpoint="medication_ocr_records" class="ghost">用药识别</button>
             <button data-endpoint="logs" class="ghost">活动日志</button>
           </div>
+          <div class="settings-form">
+            <input id="ocrRecordId" placeholder="输入 OCR 记录 ID 查看详情" />
+            <button id="loadOcrRecord" class="ghost">查看 OCR 详情</button>
+          </div>
           <pre id="dataView" class="pre"></pre>
+        </div>
+
+        <!-- 系统统计 -->
+        <div class="card">
+          <div class="card-title">系统统计</div>
+          <div class="card-actions">
+            <button id="loadStats">刷新</button>
+          </div>
+          <pre id="stats" class="pre"></pre>
+        </div>
+
+        <!-- 服务状态 -->
+        <div class="card">
+          <div class="card-title">服务状态</div>
+          <div class="card-actions">
+            <button id="checkServices">检查</button>
+          </div>
+          <pre id="services" class="pre"></pre>
         </div>
       </div>
     </div>
@@ -58,4 +97,3 @@
     <script src="./app.js"></script>
   </body>
 </html>
-

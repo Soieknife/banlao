@@ -125,14 +125,15 @@ SQLite 文件位置（仅本地兜底）: `server/database.sqlite`
 
 ## 5. 前端功能模块
 
-### 老人端 (client)
-- **首页**: 大图标网格，包含紧急呼救、提醒、服药记录、生活查询、AI 陪聊等入口。
-- **未绑定提示**: 若老人账号尚未绑定任何子女，首页底部会常驻提示窗口，支持直接输入验证码确认绑定（无需单独入口）。
+### 统一前端 (client)
+- **单应用按角色切换**: 老人与子女共用一个 `client`，登录后根据 `role` 在同一首页展示对应模块，不再维护独立 `child-client`。
+- **老人首页**: 大图标网格，包含紧急呼救、提醒、服药记录、生活查询、AI 陪聊、识药助手等入口。
+- **子女首页**: 在同一首页展示守护中的长辈列表、绑定入口与状态概览。
+- **未绑定提示**: 若老人账号尚未绑定任何子女，首页内直接输入验证码确认绑定（无需单独入口）。
 - **语音播报**: 工具类 `utils/voice.js` 封装，支持页面进入提示及操作反馈。
-- **会员开通**: 由子女端为指定老人开通会员（老人端仅显示状态与引导）。
-- **用药说明书识别（规划）**: 拍照说明书 -> OCR/LLM 提取用法用量/功能主治/注意事项 -> 用通俗语音向老人解释。
+- **识药助手**: 支持拍照识别、结构化字段提取、风险提醒、历史记录查看与老人友好摘要。
 
-### 子女端（同一个前端项目按角色切换）
+### 子女守护能力（同一个前端项目按角色切换）
 - **长辈列表**: 实时查看多位长辈的服药状态与待办提醒数量。
 - **绑定申请**: 绑定需老人端确认 + 验证码。
 - **提醒管理**: 支持类型、时间、重复规则、编辑/删除、启用/停用。
@@ -140,16 +141,16 @@ SQLite 文件位置（仅本地兜底）: `server/database.sqlite`
 - **会员开通**: 子女端为指定老人开通会员。
 
 ### 页面路由（关键页面）
-- 老人端：
+- 统一入口：
   - `/pages/login/login` 登录
   - `/pages/register/register` 注册
-  - `/pages/index/index` 首页
+  - `/pages/index/index` 统一首页（根据角色展示老人/子女内容）
   - `/pages/reminders/reminders` 老人提醒列表
   - `/pages/health/health` 服药记录
   - `/pages/medication-ocr/medication-ocr` 说明书拍照识别
   - `/pages/ai/ai` AI 陪聊（会员可用）
-- 子女端（登录后按角色进入）：
-  - `/pages/child/index/index` 长辈列表
+- 子女能力页面：
+  - `/pages/child/index/index` 兼容旧链接，自动跳转到统一首页
   - `/pages/child/elder-status/elder-status` 长辈状态
   - `/pages/child/reminder-manage/reminder-manage` 提醒管理
   - `/pages/child/emergency-settings/emergency-settings` 紧急联系人设置
@@ -200,10 +201,9 @@ AI_MODEL=deepseek-chat
 ```
 
 ### 启动步骤
-1. **安装依赖**: 分别在 `server`, `client`, `child-client` 执行 `npm install`。
+1. **安装依赖**: 分别在 `server`, `client` 执行 `npm install`。
 2. **启动后端**: `cd server && npm run dev`
-3. **启动老人端**: `cd client && npm run dev:h5`
-4. **启动子女端**: `cd child-client && npm run dev:h5`
+3. **启动前端**: `cd client && npm run dev:h5`
 
 ### SQLite 迁移到 Postgres
 当你已经在本地 SQLite 里有测试数据，并希望迁移到云 Postgres 时：
@@ -213,9 +213,17 @@ AI_MODEL=deepseek-chat
    - 清空目标库再导入：`cd server && RESET=true npm run migrate:sqlite2pg`
 
 ### 管理后台
-访问：`http://localhost:3000/admin`\n+1. 使用管理员账号登录获取 token（/api/user/login）。\n+2. 在后台粘贴 token（Bearer 省略）即可调用管理员 API。\n+3. 可在“设置中心”写入 `AI_API_KEY` / `AI_API_URL` / `AI_MODEL` / `BAIDU_OCR_API_KEY` / `BAIDU_OCR_SECRET_KEY` 等。\n+
-### 用药 OCR 落地路径（初步）
-1. 前端拍照上传说明书图片（uploadFile）。\n+2. OCR 服务识别出全文文本（建议高精度印刷体 + 方向检测）。\n+3. 大模型对 OCR 文本做结构化提取（药品名称/功能主治/用法用量/禁忌/注意事项/不良反应）。\n+4. 生成“老人友好版”摘要，并支持语音播报与子女端回溯查看。\n+5. 后续增强：表格识别、版面还原、图片预处理（去阴影/矫正/裁边）以提升准确率。
+访问：`http://localhost:3000/admin`
+1. 使用管理员账号登录获取 token（`/api/user/login`）。
+2. 在后台粘贴 token（Bearer 省略）即可调用管理员 API。
+3. 可在“设置中心”写入 `AI_API_KEY` / `AI_API_URL` / `AI_MODEL` / `BAIDU_OCR_API_KEY` / `BAIDU_OCR_SECRET_KEY` 等。
+
+### 用药 OCR 落地路径
+1. 前端拍照上传说明书图片（`uploadFile`）。
+2. OCR 服务识别出全文文本（建议高精度印刷体 + 方向检测）。
+3. 大模型对 OCR 文本做结构化提取，规则引擎再做字段兜底和药名修正。
+4. 生成老人友好摘要、风险提醒、服用提示，并保留历史记录回溯。
+5. 后续增强：表格识别、版面还原、图片预处理（去阴影/矫正/裁边）以提升准确率。
 ---
 
 ## 7. 后续优化方向

@@ -58,6 +58,21 @@ function wire() {
   const setValue = document.getElementById('setValue');
 
   const dataView = document.getElementById('dataView');
+  const ocrRecordId = document.getElementById('ocrRecordId');
+  const loadOcrRecordBtn = document.getElementById('loadOcrRecord');
+
+  const setVipBtn = document.getElementById('setVipBtn');
+  const vipForm = document.getElementById('vipForm');
+  const vipUserId = document.getElementById('vipUserId');
+  const vipDays = document.getElementById('vipDays');
+  const confirmVipBtn = document.getElementById('confirmVipBtn');
+  const userData = document.getElementById('userData');
+
+  const loadStatsBtn = document.getElementById('loadStats');
+  const statsEl = document.getElementById('stats');
+
+  const checkServicesBtn = document.getElementById('checkServices');
+  const servicesEl = document.getElementById('services');
 
   tokenInput.value = getToken();
 
@@ -104,19 +119,111 @@ function wire() {
     }
   });
 
+  // 用户管理相关
+  setVipBtn.addEventListener('click', () => {
+    vipForm.style.display = vipForm.style.display === 'none' ? 'flex' : 'none';
+  });
+
+  confirmVipBtn.addEventListener('click', async () => {
+    const userId = vipUserId.value.trim();
+    const days = vipDays.value.trim();
+    
+    if (!userId || !days) {
+      userData.textContent = '请输入用户ID和天数';
+      return;
+    }
+
+    userData.textContent = '设置中...';
+    try {
+      await apiPost('/set_vip', { user_id: userId, days: days });
+      userData.textContent = 'VIP设置成功';
+      vipUserId.value = '';
+      vipDays.value = '';
+      vipForm.style.display = 'none';
+    } catch (e) {
+      userData.textContent = e.message;
+    }
+  });
+
+  // 数据查看
   document.querySelectorAll('[data-endpoint]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const ep = btn.getAttribute('data-endpoint');
-      dataView.textContent = '加载中...';
+      const targetEl = ep === 'users' ? userData : dataView;
+      targetEl.textContent = '加载中...';
       try {
         const data = await apiGet('/' + ep);
-        pretty(dataView, data);
+        pretty(targetEl, data);
       } catch (e) {
-        dataView.textContent = e.message;
+        targetEl.textContent = e.message;
       }
     });
   });
+
+  loadOcrRecordBtn.addEventListener('click', async () => {
+    const id = (ocrRecordId.value || '').trim();
+    if (!id) {
+      dataView.textContent = '请先输入 OCR 记录 ID';
+      return;
+    }
+    dataView.textContent = '加载中...';
+    try {
+      const data = await apiGet(`/medication_ocr_record/${encodeURIComponent(id)}`);
+      pretty(dataView, data);
+    } catch (e) {
+      dataView.textContent = e.message;
+    }
+  });
+
+  // 系统统计
+  loadStatsBtn.addEventListener('click', async () => {
+    statsEl.textContent = '加载中...';
+    try {
+      const data = await apiGet('/stats');
+      pretty(statsEl, data);
+    } catch (e) {
+      statsEl.textContent = e.message;
+    }
+  });
+
+  // 服务状态检查
+  checkServicesBtn.addEventListener('click', async () => {
+    servicesEl.textContent = '检查中...';
+    try {
+      // 检查各个服务的状态
+      const services = {
+        api: '正常',
+        database: '正常',
+        ai: '未配置',
+        ocr: '未配置'
+      };
+
+      // 检查API状态
+      await apiGet('/overview');
+      services.api = '正常';
+
+      // 检查设置中的服务配置
+      const settings = await apiGet('/settings');
+      const settingKeys = settings.map(s => s.key);
+      
+      if (settingKeys.includes('AI_API_KEY')) {
+        services.ai = '已配置';
+      }
+      
+      if (settingKeys.includes('BAIDU_OCR_API_KEY')) {
+        services.ocr = '已配置';
+      }
+
+      pretty(servicesEl, services);
+    } catch (e) {
+      servicesEl.textContent = e.message;
+    }
+  });
+
+  // 初始化加载
+  loadOverviewBtn.click();
+  loadStatsBtn.click();
+  checkServicesBtn.click();
 }
 
 wire();
-

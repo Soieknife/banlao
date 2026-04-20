@@ -37,17 +37,28 @@ router.get('/today', auth, (req, res) => {
 router.post('/take_medicine', auth, (req, res) => {
     const userId = req.user.id;
     const today = new Date().toISOString().split('T')[0];
+    const findSql = `SELECT id FROM health_records WHERE user_id = ? AND record_date = ? LIMIT 1`;
+    db.get(findSql, [userId, today], (findErr, row) => {
+        if (findErr) return res.error(findErr.message, 500);
 
-    const sql = `UPDATE health_records SET medication_taken = 1 WHERE user_id = ? AND record_date = ?`;
-    db.run(sql, [userId, today], function(err) {
-        if (err) {
-            return res.error(err.message, 500);
+        const updateRecord = () => {
+            const sql = `UPDATE health_records SET medication_taken = 1 WHERE user_id = ? AND record_date = ?`;
+            db.run(sql, [userId, today], function(err) {
+                if (err) return res.error(err.message, 500);
+                logActivity(userId, 'medicine_taken', '用户标记了今日已服药');
+                res.success(null, '已记录今日服药');
+            });
+        };
+
+        if (row && row.id) {
+            return updateRecord();
         }
-        
-        // 记录日志
-        logActivity(userId, 'medicine_taken', '用户标记了今日已服药');
-        
-        res.success(null, '已记录今日服药');
+
+        const insertSql = `INSERT INTO health_records (user_id, steps, medication_taken, record_date) VALUES (?, 0, 0, ?)`;
+        db.run(insertSql, [userId, today], function(insertErr) {
+            if (insertErr) return res.error(insertErr.message, 500);
+            updateRecord();
+        });
     });
 });
 

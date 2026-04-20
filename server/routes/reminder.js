@@ -79,18 +79,20 @@ router.get('/elder_list/:elderId', auth, (req, res) => {
  * @route POST /api/reminder/add
  */
 router.post('/add', auth, (req, res) => {
-    const { title, content, remind_time, type, user_id, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled } = req.body;
+    const { title, content, medication_name, dosage_note, remind_time, type, user_id, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled } = req.body;
     const currentUserId = req.user.id;
     
     // 如果传了 user_id，说明是子女在设置，这里简单处理，实际应检查绑定关系
     const targetUserId = user_id || currentUserId;
 
     const insert = () => {
-        const sql = `INSERT INTO reminders (user_id, title, content, remind_time, type, created_by, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const sql = `INSERT INTO reminders (user_id, title, content, medication_name, dosage_note, remind_time, type, created_by, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         db.run(sql, [
             targetUserId,
             title,
             content,
+            medication_name || '',
+            dosage_note || '',
             remind_time,
             type,
             currentUserId,
@@ -133,7 +135,7 @@ router.post('/add', auth, (req, res) => {
  */
 router.post('/update/:id', auth, (req, res) => {
     const id = req.params.id;
-    const { title, content, remind_time, type, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled } = req.body;
+    const { title, content, medication_name, dosage_note, remind_time, type, repeat_type, repeat_days, repeat_times, start_date, end_date, enabled } = req.body;
 
     const findSql = `SELECT id, user_id FROM reminders WHERE id = ? LIMIT 1`;
     db.get(findSql, [id], (err, reminder) => {
@@ -145,13 +147,15 @@ router.post('/update/:id', auth, (req, res) => {
         const doUpdate = () => {
             const sql = `
                 UPDATE reminders
-                SET title = ?, content = ?, remind_time = ?, type = ?,
+                SET title = ?, content = ?, medication_name = ?, dosage_note = ?, remind_time = ?, type = ?,
                     repeat_type = ?, repeat_days = ?, repeat_times = ?, start_date = ?, end_date = ?, enabled = ?
                 WHERE id = ?
             `;
             db.run(sql, [
                 title,
                 content,
+                medication_name || '',
+                dosage_note || '',
                 remind_time,
                 type,
                 repeat_type || 'once',

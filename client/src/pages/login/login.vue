@@ -3,7 +3,7 @@
 		<view class="logo-area">
 			<image src="/static/logo.png" class="logo"></image>
 			<text class="text-title">暖阳陪伴</text>
-			<text class="text-helper">让关爱随时随地</text>
+			<text class="text-helper">老人陪伴与子女守护共用一个应用</text>
 		</view>
 
 		<view class="form-area card-elder">
@@ -40,8 +40,58 @@ const handleLogin = async () => {
 		uni.setStorageSync('user', JSON.stringify(res.data.user));
 		
 		speak(`欢迎回来，${res.data.user.nickname || res.data.user.username}`);
+		
+		// 检查是否需要绑定
 		if (res.data.user.role === 'child') {
-			uni.reLaunch({ url: '/pages/child/index/index' });
+			try {
+				const eldersRes = await request('/relation/elders');
+				const hasElders = Array.isArray(eldersRes.data) && eldersRes.data.length > 0;
+				if (!hasElders) {
+					uni.showModal({
+						title: '未绑定长辈',
+						content: '您还没有绑定长辈，绑定后可以查看长辈状态并提供守护。',
+						confirmText: '去绑定',
+						cancelText: '稍后',
+						success: (modalRes) => {
+							if (modalRes.confirm) {
+								uni.reLaunch({ url: '/pages/index/index' });
+							} else {
+								uni.reLaunch({ url: '/pages/index/index' });
+							}
+						}
+					});
+				} else {
+					uni.reLaunch({ url: '/pages/index/index' });
+				}
+			} catch (err) {
+				// 如果检查失败，仍然跳转到首页
+				uni.reLaunch({ url: '/pages/index/index' });
+			}
+		} else if (res.data.user.role === 'elder') {
+			try {
+				const childrenRes = await request('/relation/my_children');
+				const hasChildren = Array.isArray(childrenRes.data) && childrenRes.data.length > 0;
+				if (!hasChildren) {
+					uni.showModal({
+						title: '未绑定子女',
+						content: '您还没有绑定子女，绑定后子女可以远程守护您的健康。',
+						confirmText: '去绑定',
+						cancelText: '稍后',
+						success: (modalRes) => {
+							if (modalRes.confirm) {
+								uni.reLaunch({ url: '/pages/index/index' });
+							} else {
+								uni.reLaunch({ url: '/pages/index/index' });
+							}
+						}
+					});
+				} else {
+					uni.reLaunch({ url: '/pages/index/index' });
+				}
+			} catch (err) {
+				// 如果检查失败，仍然跳转到首页
+				uni.reLaunch({ url: '/pages/index/index' });
+			}
 		} else {
 			uni.reLaunch({ url: '/pages/index/index' });
 		}
