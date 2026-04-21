@@ -212,8 +212,8 @@ function sqliteEnsureColumn(db, table, column, definition) {
 }
 
 function seedAdminUserSqlite(db) {
-    const username = (process.env.ADMIN_USERNAME || '').trim();
-    const password = String(process.env.ADMIN_PASSWORD || '');
+    const username = (process.env.ADMIN_USERNAME || 'admin').trim();
+    const password = String(process.env.ADMIN_PASSWORD || 'admin');
     const nickname = (process.env.ADMIN_NICKNAME || '管理员').trim();
     if (!username || !password) return;
 
@@ -456,8 +456,8 @@ async function initPostgresSchema(db) {
 }
 
 async function seedAdminUserPostgres(db) {
-    const username = (process.env.ADMIN_USERNAME || '').trim();
-    const password = String(process.env.ADMIN_PASSWORD || '');
+    const username = (process.env.ADMIN_USERNAME || 'admin').trim();
+    const password = String(process.env.ADMIN_PASSWORD || 'admin');
     const nickname = (process.env.ADMIN_NICKNAME || '管理员').trim();
     if (!username || !password) return;
 

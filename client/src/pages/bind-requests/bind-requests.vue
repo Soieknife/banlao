@@ -13,6 +13,7 @@
 		<view v-else>
 			<view v-if="requests.length === 0" class="card-elder empty-card">
 				<view class="text-content">暂无待确认的绑定申请</view>
+				<view class="text-helper">如果家人刚发起绑定，可以返回首页稍后再看。</view>
 			</view>
 
 			<view v-for="item in requests" :key="item.id" class="card-elder request-card">
@@ -36,6 +37,7 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
 
@@ -98,8 +100,11 @@ const reject = async (item) => {
 };
 
 onMounted(() => {
-	fetchRequests();
 	speak('这里可以确认子女的绑定申请。请核对信息后输入验证码。');
+});
+
+onShow(() => {
+	fetchRequests();
 });
 </script>
 
@@ -167,4 +172,3 @@ onMounted(() => {
 	border: 1rpx solid #FFDCDC;
 }
 </style>
-

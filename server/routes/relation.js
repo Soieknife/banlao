@@ -43,6 +43,39 @@ function generateBindCode() {
     return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+function isBindRequestExpired(requestRow) {
+    if (!requestRow || requestRow.status !== 'pending' || !requestRow.expires_at) {
+        return false;
+    }
+
+    const expiresAt = new Date(requestRow.expires_at).getTime();
+    return Number.isFinite(expiresAt) && expiresAt < Date.now();
+}
+
+function syncExpiredBindRequests(rows, cb) {
+    const list = Array.isArray(rows) ? rows : [];
+    const expiredIds = [];
+    const normalizedRows = list.map((row) => {
+        if (isBindRequestExpired(row)) {
+            expiredIds.push(row.id);
+            return { ...row, status: 'expired' };
+        }
+        return row;
+    });
+
+    if (!expiredIds.length) {
+        return cb(null, normalizedRows);
+    }
+
+    const uniqueIds = [...new Set(expiredIds)];
+    const placeholders = uniqueIds.map(() => '?').join(', ');
+    const sql = `UPDATE bind_requests SET status = 'expired' WHERE id IN (${placeholders})`;
+    db.run(sql, uniqueIds, (err) => {
+        if (err) return cb(err);
+        cb(null, normalizedRows);
+    });
+}
+
 /**
  * 老人端：通过验证码确认绑定（不需要 request_id）
  * @route POST /api/relation/approve_by_code
@@ -125,6 +158,7 @@ router.post('/request_bind', auth, (req, res) => {
                     const updateSql = `UPDATE bind_requests SET verify_code = ?, expires_at = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?`;
                     db.run(updateSql, [code, expiresAt, pending.id], function(err) {
                         if (err) return res.error(err.message, 500);
+                        logActivity(elder.id, 'bind_requested', `子女(${childId}) 发起了绑定申请`);
                         res.success({ request_id: pending.id, verify_code: code, expires_at: expiresAt }, '已发起绑定申请，请让老人端输入验证码确认');
                     });
                     return;
@@ -133,6 +167,7 @@ router.post('/request_bind', auth, (req, res) => {
                 const insertSql = `INSERT INTO bind_requests (elder_id, child_id, verify_code, status, expires_at) VALUES (?, ?, ?, 'pending', ?)`;
                 db.run(insertSql, [elder.id, childId, code, expiresAt], function(err) {
                     if (err) return res.error(err.message, 500);
+                    logActivity(elder.id, 'bind_requested', `子女(${childId}) 发起了绑定申请`);
                     res.success({ request_id: this.lastID, verify_code: code, expires_at: expiresAt }, '已发起绑定申请，请让老人端输入验证码确认');
                 });
             });
@@ -166,7 +201,53 @@ router.get('/pending_requests', auth, (req, res) => {
     `;
     db.all(sql, [req.user.id], (err, rows) => {
         if (err) return res.error(err.message, 500);
-        res.success(rows);
+        syncExpiredBindRequests(rows, (syncErr, normalizedRows) => {
+            if (syncErr) return res.error(syncErr.message, 500);
+            res.success(normalizedRows.filter((row) => row.status === 'pending'));
+        });
+    });
+});
+
+/**
+ * 子女端：查看自己发起的绑定申请
+ * @route GET /api/relation/my_bind_requests
+ */
+router.get('/my_bind_requests', auth, (req, res) => {
+    if (req.user.role !== 'child') {
+        return res.error('仅子女账号可查看绑定申请记录', 403);
+    }
+
+    const sql = `
+        SELECT
+            br.id,
+            br.elder_id,
+            br.child_id,
+            br.verify_code,
+            br.status,
+            br.expires_at,
+            br.created_at,
+            u.username as elder_username,
+            u.nickname as elder_nickname
+        FROM bind_requests br
+        JOIN users u ON u.id = br.elder_id
+        WHERE br.child_id = ?
+        ORDER BY
+            CASE br.status
+                WHEN 'pending' THEN 0
+                WHEN 'approved' THEN 1
+                WHEN 'rejected' THEN 2
+                WHEN 'expired' THEN 3
+                ELSE 4
+            END,
+            br.created_at DESC
+        LIMIT 20
+    `;
+    db.all(sql, [req.user.id], (err, rows) => {
+        if (err) return res.error(err.message, 500);
+        syncExpiredBindRequests(rows, (syncErr, normalizedRows) => {
+            if (syncErr) return res.error(syncErr.message, 500);
+            res.success(normalizedRows);
+        });
     });
 });
 
@@ -247,7 +328,10 @@ router.get('/request_status/:id', auth, (req, res) => {
         if (req.user.role === 'elder' && Number(row.elder_id) !== Number(req.user.id)) {
             return res.error('无权限查看该绑定申请', 403);
         }
-        res.success(row);
+        syncExpiredBindRequests([row], (syncErr, normalizedRows) => {
+            if (syncErr) return res.error(syncErr.message, 500);
+            res.success(normalizedRows[0] || row);
+        });
     });
 });
 

@@ -69,9 +69,23 @@ const handleLogin = async () => {
 			}
 		} else if (res.data.user.role === 'elder') {
 			try {
-				const childrenRes = await request('/relation/my_children');
+				const [childrenRes, pendingRes] = await Promise.all([
+					request('/relation/my_children'),
+					request('/relation/pending_requests')
+				]);
 				const hasChildren = Array.isArray(childrenRes.data) && childrenRes.data.length > 0;
-				if (!hasChildren) {
+				const pendingCount = Array.isArray(pendingRes.data) ? pendingRes.data.length : 0;
+				if (pendingCount > 0) {
+					uni.showModal({
+						title: '待处理绑定申请',
+						content: `您有 ${pendingCount} 条家人绑定申请待确认，请进入首页查看。`,
+						confirmText: '去查看',
+						cancelText: '稍后',
+						success: () => {
+							uni.reLaunch({ url: '/pages/index/index' });
+						}
+					});
+				} else if (!hasChildren) {
 					uni.showModal({
 						title: '未绑定子女',
 						content: '您还没有绑定子女，绑定后子女可以远程守护您的健康。',

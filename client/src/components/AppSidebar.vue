@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 const props = defineProps({
 	activePath: {
@@ -45,17 +45,35 @@ const props = defineProps({
 });
 
 const visible = ref(false);
+const userRole = ref('');
 
-// 导航项配置
-const navItems = [
-	{ path: '/pages/index/index', icon: '🏠', label: '首页', desc: '回到主功能入口' },
-	{ path: '/pages/ai/ai', icon: '🤖', label: '暖阳陪聊', desc: '随时说说话' },
-	{ path: '/pages/reminders/reminders', icon: '🔔', label: '提醒事项', desc: '管理日常和用药提醒' },
-	{ path: '/pages/health/health', icon: '💊', label: '用药管理', desc: '服药记录和识药助手' },
-	{ path: '/pages/medication-ocr/medication-ocr', icon: '📷', label: '识药助手', desc: '拍照识别说明书' },
-	{ path: '/pages/life/life', icon: '☀️', label: '生活查询', desc: '天气和常用电话' },
-	{ path: '/pages/profile/profile', icon: '👤', label: '个人信息', desc: '修改手机号和查看家人' }
-];
+const loadUserRole = () => {
+	try {
+		const rawUser = uni.getStorageSync('user');
+		const parsedUser = rawUser ? JSON.parse(rawUser) : {};
+		userRole.value = parsedUser?.role || '';
+	} catch (error) {
+		userRole.value = '';
+	}
+};
+
+const navItems = computed(() => {
+	const items = [
+		{ path: '/pages/index/index', icon: '🏠', label: '首页', desc: '回到主功能入口' },
+		{ path: '/pages/ai/ai', icon: '🤖', label: '暖阳陪聊', desc: '随时说说话' },
+		{ path: '/pages/reminders/reminders', icon: '🔔', label: '提醒事项', desc: '管理日常和用药提醒' },
+		{ path: '/pages/health/health', icon: '💊', label: '用药管理', desc: '服药记录和识药助手' },
+		{ path: '/pages/medication-ocr/medication-ocr', icon: '📷', label: '识药助手', desc: '拍照识别说明书' },
+		{ path: '/pages/life/life', icon: '☀️', label: '生活查询', desc: '天气和常用电话' }
+	];
+
+	if (userRole.value === 'elder') {
+		items.push({ path: '/pages/bind-requests/bind-requests', icon: '🔐', label: '绑定确认', desc: '查看和处理家人绑定申请' });
+	}
+
+	items.push({ path: '/pages/profile/profile', icon: '👤', label: '个人信息', desc: '修改手机号和查看家人' });
+	return items;
+});
 
 // 切换侧边栏
 const toggleDrawer = () => {
@@ -83,6 +101,10 @@ const goTo = (path) => {
 		uni.showToast({ title: '导航失败', icon: 'none' });
 	}
 };
+
+onMounted(() => {
+	loadUserRole();
+});
 </script>
 
 <style lang="scss" scoped>
