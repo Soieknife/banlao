@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^netstat -ano \\| findstr :3000$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^tasklist /FI \"PID eq 8440\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

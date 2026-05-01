@@ -98,6 +98,27 @@
 			"style": {
 				"navigationBarTitleText": "活动日志"
 			}
+		},
+		{
+			"path": "pages/chat/chat-list",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/chat/chat-detail",
+			"style": {
+				"navigationBarTitleText": "聊天",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/admin/index",
+			"style": {
+				"navigationBarTitleText": "管理后台",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {

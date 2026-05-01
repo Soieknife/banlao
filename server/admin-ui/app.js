@@ -1,8 +1,18 @@
 const API_BASE = '/api/admin';
 
 function getToken() {
-  const t = localStorage.getItem('admin_token') || '';
-  return t.trim();
+  // 优先从主应用的localStorage获取token
+  let token = localStorage.getItem('token') || '';
+  if (!token) {
+    // 其次从admin_token获取
+    token = localStorage.getItem('admin_token') || '';
+  }
+  if (!token) {
+    // 最后从URL参数获取
+    const urlParams = new URLSearchParams(window.location.search);
+    token = urlParams.get('token') || '';
+  }
+  return token.trim();
 }
 
 function setToken(t) {
@@ -45,9 +55,6 @@ function pretty(el, obj) {
 }
 
 function wire() {
-  const tokenInput = document.getElementById('tokenInput');
-  const saveTokenBtn = document.getElementById('saveToken');
-  const clearTokenBtn = document.getElementById('clearToken');
   const loadOverviewBtn = document.getElementById('loadOverview');
   const overviewEl = document.getElementById('overview');
 
@@ -74,18 +81,11 @@ function wire() {
   const checkServicesBtn = document.getElementById('checkServices');
   const servicesEl = document.getElementById('services');
 
-  tokenInput.value = getToken();
-
-  saveTokenBtn.addEventListener('click', () => {
-    setToken(tokenInput.value);
-    alert('Token 已保存');
-  });
-
-  clearTokenBtn.addEventListener('click', () => {
-    setToken('');
-    tokenInput.value = '';
-    alert('已清除');
-  });
+  // 自动保存token到localStorage
+  const token = getToken();
+  if (token) {
+    setToken(token);
+  }
 
   loadOverviewBtn.addEventListener('click', async () => {
     overviewEl.textContent = '加载中...';

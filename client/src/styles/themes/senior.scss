@@ -1,0 +1,268 @@
+/**
+ * 暖阳陪伴 - 适老化主题（高对比度、大字体、易用性优化）
+ * 专门为老年人设计的UI主题，增强可读性和易用性
+ */
+
+// ==================== 适老化主色板（高对比度） ====================
+
+// 主色 - 温暖橙红（增强对比度）
+$senior-primary-color: #FF8C42;        // 主色
+$senior-primary-light: #FFE4CC;        // 浅色背景
+$senior-primary-lighter: #FFF3E8;      // 更浅背景
+$senior-primary-dark: #E57C35;         // 深色强调
+
+// 次色 - 浅橙粉
+$senior-secondary-color: #F5956E;      // 辅助色
+$senior-secondary-light: #FCE8DE;      // 浅色背景
+
+// 成功色 - 高对比度绿
+$senior-success-color: #4CAF50;        // 成功/积极
+$senior-success-light: #E8F5E8;        // 浅色背景
+
+// 警告色 - 高对比度橙
+$senior-warning-color: #FF9800;        // 警告/提醒
+$senior-warning-light: #FFF3E0;        // 浅色背景
+
+// 错误色 - 高对比度红
+$senior-error-color: #F44336;          // 错误/危险
+$senior-error-light: #FFEBEE;          // 浅色背景
+
+// 信息色 - 高对比度蓝
+$senior-info-color: #2196F3;           // 信息/提示
+$senior-info-light: #E3F2FD;           // 浅色背景
+
+// ==================== 适老化中性色（高对比度） ====================
+
+// 背景色
+$senior-bg-primary: #FFFFFF;           // 页面主背景（纯白）
+$senior-bg-secondary: #FAFAFA;         // 次要背景
+
+// 卡片背景
+$senior-card-bg: #FFFFFF;              // 卡片背景（纯白）
+$senior-card-bg-alt: #F8F8F8;          // 卡片背景（替代）
+$senior-card-bg-hover: #F5F5F5;        // 卡片悬停
+
+// 文字色（高对比度）
+$senior-text-primary: #212121;         // 主要文字（深黑）
+$senior-text-secondary: #424242;       // 次要文字（深灰）
+$senior-text-tertiary: #616161;        // 辅助文字（中灰）
+$senior-text-inverse: #FFFFFF;         // 反色文字
+
+// 边框色（高对比度）
+$senior-border-light: #E0E0E0;         // 浅边框
+$senior-border-base: #BDBDBD;          // 基础边框
+$senior-border-dark: #9E9E9E;          // 深边框
+
+// ==================== 适老化字体系统 ====================
+
+// 字体大小 - 显著增大，适合老年人阅读
+$senior-fs-xs: 32rpx;     // 极小文字 (16px)
+$senior-fs-sm: 36rpx;     // 小文字 (18px)
+$senior-fs-base: 40rpx;   // 基础文字 (20px)
+$senior-fs-lg: 44rpx;     // 大文字 (22px)
+$senior-fs-xl: 48rpx;     // 超大文字 (24px)
+$senior-fs-2xl: 56rpx;    // 标题文字 (28px)
+$senior-fs-3xl: 64rpx;    // 大标题 (32px)
+
+// 字体堆栈 - 优先中文字体，确保清晰
+$senior-font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+
+// 字重（增强可读性）
+$senior-fw-normal: 400;
+$senior-fw-medium: 500;
+$senior-fw-semi-bold: 600;
+$senior-fw-bold: 700;
+
+// 行高（增加行距，提高可读性）
+$senior-line-height-tight: 1.4;
+$senior-line-height-normal: 1.6;
+$senior-line-height-relaxed: 1.8;
+
+// ==================== 适老化间距系统 ====================
+
+// 间距 - 增大间距，减少视觉拥挤
+$senior-spacing-xs: 20rpx;    // 10px
+$senior-spacing-sm: 28rpx;    // 14px
+$senior-spacing-md: 36rpx;    // 18px
+$senior-spacing-lg: 52rpx;    // 26px
+$senior-spacing-xl: 68rpx;    // 34px
+$senior-spacing-2xl: 84rpx;   // 42px
+
+// ==================== 适老化组件尺寸 ====================
+
+// 按钮尺寸（增大触摸区域）
+$senior-btn-height-sm: 88rpx;    // 小按钮 (44px)
+$senior-btn-height-md: 100rpx;   // 中按钮 (50px)
+$senior-btn-height-lg: 112rpx;   // 大按钮 (56px)
+
+// 输入框高度
+$senior-input-height: 100rpx;    // 输入框 (50px)
+
+// 列表项高度
+$senior-list-item-height: 120rpx; // 列表项 (60px)
+
+// 卡片圆角（适中圆角，现代感）
+$senior-radius-sm: 8rpx;
+$senior-radius-md: 12rpx;
+$senior-radius-lg: 16rpx;
+$senior-radius-xl: 20rpx;
+
+// 阴影（柔和阴影，不刺眼）
+$senior-shadow-xs: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+$senior-shadow-sm: 0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+$senior-shadow-md: 0 6rpx 16rpx rgba(0, 0, 0, 0.15);
+$senior-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.18);
+
+// ==================== 适老化动画/过渡 ====================
+
+// 过渡时间（稍慢，让用户能感知变化）
+$senior-transition-fast: 0.2s ease;
+$senior-transition-base: 0.3s ease;
+$senior-transition-slow: 0.4s ease;
+
+// ==================== 适老化专用类 ====================
+
+// 高对比度模式
+.senior-high-contrast {
+  --color-primary: #{$senior-primary-color};
+  --color-success: #{$senior-success-color};
+  --color-warning: #{$senior-warning-color};
+  --color-error: #{$senior-error-color};
+  --color-info: #{$senior-info-color};
+  --bg-primary: #{$senior-bg-primary};
+  --text-primary: #{$senior-text-primary};
+  --text-secondary: #{$senior-text-secondary};
+  --border-base: #{$senior-border-base};
+}
+
+// 大字体模式
+.senior-large-font {
+  font-size: 1.2em; // 全局放大20%
+}
+
+// 适老化按钮样式
+.senior-btn {
+  min-height: $senior-btn-height-md;
+  padding: $senior-spacing-md $senior-spacing-lg;
+  font-size: $senior-fs-base;
+  font-weight: $senior-fw-medium;
+  border-radius: $senior-radius-lg;
+  border: 2rpx solid transparent;
+  transition: all $senior-transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.senior-btn-primary {
+    background-color: $senior-primary-color;
+    color: $senior-text-inverse;
+    border-color: $senior-primary-color;
+
+    &:hover {
+      background-color: $senior-primary-dark;
+      border-color: $senior-primary-dark;
+    }
+  }
+
+  &.senior-btn-secondary {
+    background-color: transparent;
+    color: $senior-primary-color;
+    border-color: $senior-primary-color;
+
+    &:hover {
+      background-color: $senior-primary-light;
+    }
+  }
+
+  &.senior-btn-ghost {
+    background-color: transparent;
+    color: $senior-text-secondary;
+    border-color: transparent;
+
+    &:hover {
+      background-color: $senior-card-bg-alt;
+    }
+  }
+}
+
+// 适老化卡片样式
+.senior-card {
+  background-color: $senior-card-bg;
+  border-radius: $senior-radius-lg;
+  padding: $senior-spacing-lg;
+  box-shadow: $senior-shadow-sm;
+  border: 1rpx solid $senior-border-light;
+  margin-bottom: $senior-spacing-md;
+}
+
+// 适老化文字样式
+.senior-text-title {
+  font-size: $senior-fs-2xl;
+  font-weight: $senior-fw-bold;
+  color: $senior-text-primary;
+  line-height: $senior-line-height-tight;
+  margin-bottom: $senior-spacing-sm;
+}
+
+.senior-text-subtitle {
+  font-size: $senior-fs-xl;
+  font-weight: $senior-fw-semi-bold;
+  color: $senior-text-secondary;
+  line-height: $senior-line-height-normal;
+  margin-bottom: $senior-spacing-sm;
+}
+
+.senior-text-body {
+  font-size: $senior-fs-base;
+  font-weight: $senior-fw-normal;
+  color: $senior-text-primary;
+  line-height: $senior-line-height-normal;
+  margin-bottom: $senior-spacing-sm;
+}
+
+.senior-text-helper {
+  font-size: $senior-fs-sm;
+  font-weight: $senior-fw-normal;
+  color: $senior-text-tertiary;
+  line-height: $senior-line-height-normal;
+}
+
+// 适老化输入框样式
+.senior-input {
+  height: $senior-input-height;
+  padding: $senior-spacing-md;
+  font-size: $senior-fs-base;
+  border-radius: $senior-radius-md;
+  border: 2rpx solid $senior-border-base;
+  background-color: $senior-card-bg;
+  transition: border-color $senior-transition-base;
+
+  &:focus {
+    border-color: $senior-primary-color;
+    outline: none;
+  }
+
+  &::placeholder {
+    color: $senior-text-tertiary;
+  }
+}
+
+// 适老化列表项样式
+.senior-list-item {
+  min-height: $senior-list-item-height;
+  padding: $senior-spacing-md;
+  display: flex;
+  align-items: center;
+  border-radius: $senior-radius-md;
+  background-color: $senior-card-bg;
+  margin-bottom: $senior-spacing-sm;
+  box-shadow: $senior-shadow-xs;
+  border: 1rpx solid $senior-border-light;
+  transition: all $senior-transition-base;
+
+  &:active {
+    background-color: $senior-card-bg-hover;
+    transform: scale(0.99);
+  }
+}

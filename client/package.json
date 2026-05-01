@@ -36,6 +36,7 @@
     "build:quickapp-webview-union": "uni build -p quickapp-webview-union"
   },
   "dependencies": {
+    "@baiducloud/sdk": "^1.0.7",
     "@dcloudio/uni-app": "3.0.0-5000520260324002",
     "@dcloudio/uni-app-harmony": "3.0.0-5000520260324002",
     "@dcloudio/uni-app-plus": "3.0.0-5000520260324002",
@@ -52,7 +53,10 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-5000520260324002",
     "@dcloudio/uni-mp-xhs": "3.0.0-5000520260324002",
     "@dcloudio/uni-quickapp-webview": "3.0.0-5000520260324002",
-    "vue": "^3.4.21",
+    "dayjs": "^1.11.10",
+    "pinia": "^2.1.6",
+    "socket.io-client": "^4.7.2",
+    "vue": "^3.5.32",
     "vue-i18n": "^9.1.9"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -7,8 +8,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const responseHandler = require('./middleware/response');
 const config = require('./config');
+const { initializeWebSocket } = require('./services/chat/websocket');
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = config.server.port;
 const HOST = config.server.host;
 
@@ -71,6 +74,7 @@ app.use('/api/ai', require('./routes/ai'));
 app.use('/api/relation', require('./routes/relation'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/medication', require('./routes/medication'));
+app.use('/api/chat', require('./routes/chat'));
 
 // 测试接口
 app.get('/api/health', (req, res) => {
@@ -102,11 +106,16 @@ app.use((err, req, res, next) => {
     res.error('服务器内部错误', 500);
 });
 
+// 初始化WebSocket
+const io = initializeWebSocket(httpServer);
+console.log('WebSocket 服务已初始化');
+
 // 启动服务器
-app.listen(PORT, HOST, () => {
+httpServer.listen(PORT, HOST, () => {
     console.log(`服务器已启动，运行在 http://${HOST}:${PORT}`);
     console.log(`环境: ${config.server.env}`);
     console.log(`API 前缀: ${config.api.prefix}`);
+    console.log(`WebSocket 已启用，连接: ws://${HOST}:${PORT}`);
 });
 
 // 进程管理

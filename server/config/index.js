@@ -44,7 +44,7 @@ const config = {
 		rateLimit: {
 			enabled: true,
 			windowMs: 15 * 60 * 1000, // 15分钟
-			max: 100 // 每IP限制请求数
+			max: 10000 // 每IP限制请求数
 		},
 		// 上传配置
 		upload: {

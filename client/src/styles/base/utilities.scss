@@ -1,0 +1,312 @@
+/**
+ * 实用工具类
+ * 常用的快速样式
+ */
+
+// ==================== 布局工具 ====================
+
+.flex {
+  display: flex;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-start {
+  display: flex;
+  align-items: flex-start;
+}
+
+.flex-end {
+  display: flex;
+  align-items: flex-end;
+}
+
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+// ==================== 网格布局 ====================
+
+.grid {
+  display: grid;
+}
+
+.grid-cols-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.grid-cols-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: $spacing-md;
+}
+
+// ==================== 间距 ====================
+
+// 边距
+.m-0 { margin: 0; }
+.m-xs { margin: $spacing-xs; }
+.m-sm { margin: $spacing-sm; }
+.m-md { margin: $spacing-md; }
+.m-lg { margin: $spacing-lg; }
+.m-xl { margin: $spacing-xl; }
+
+.mt-0 { margin-top: 0; }
+.mt-xs { margin-top: $spacing-xs; }
+.mt-sm { margin-top: $spacing-sm; }
+.mt-md { margin-top: $spacing-md; }
+.mt-lg { margin-top: $spacing-lg; }
+.mt-xl { margin-top: $spacing-xl; }
+
+.mb-0 { margin-bottom: 0; }
+.mb-xs { margin-bottom: $spacing-xs; }
+.mb-sm { margin-bottom: $spacing-sm; }
+.mb-md { margin-bottom: $spacing-md; }
+.mb-lg { margin-bottom: $spacing-lg; }
+.mb-xl { margin-bottom: $spacing-xl; }
+
+.ml-0 { margin-left: 0; }
+.ml-xs { margin-left: $spacing-xs; }
+.ml-sm { margin-left: $spacing-sm; }
+.ml-md { margin-left: $spacing-md; }
+.ml-lg { margin-left: $spacing-lg; }
+.ml-xl { margin-left: $spacing-xl; }
+
+.mr-0 { margin-right: 0; }
+.mr-xs { margin-right: $spacing-xs; }
+.mr-sm { margin-right: $spacing-sm; }
+.mr-md { margin-right: $spacing-md; }
+.mr-lg { margin-right: $spacing-lg; }
+.mr-xl { margin-right: $spacing-xl; }
+
+// 内边距
+.p-0 { padding: 0; }
+.p-xs { padding: $spacing-xs; }
+.p-sm { padding: $spacing-sm; }
+.p-md { padding: $spacing-md; }
+.p-lg { padding: $spacing-lg; }
+.p-xl { padding: $spacing-xl; }
+
+.pt-0 { padding-top: 0; }
+.pt-xs { padding-top: $spacing-xs; }
+.pt-sm { padding-top: $spacing-sm; }
+.pt-md { padding-top: $spacing-md; }
+.pt-lg { padding-top: $spacing-lg; }
+.pt-xl { padding-top: $spacing-xl; }
+
+.pb-0 { padding-bottom: 0; }
+.pb-xs { padding-bottom: $spacing-xs; }
+.pb-sm { padding-bottom: $spacing-sm; }
+.pb-md { padding-bottom: $spacing-md; }
+.pb-lg { padding-bottom: $spacing-lg; }
+.pb-xl { padding-bottom: $spacing-xl; }
+
+.pl-0 { padding-left: 0; }
+.pl-xs { padding-left: $spacing-xs; }
+.pl-sm { padding-left: $spacing-sm; }
+.pl-md { padding-left: $spacing-md; }
+.pl-lg { padding-left: $spacing-lg; }
+.pl-xl { padding-left: $spacing-xl; }
+
+.pr-0 { padding-right: 0; }
+.pr-xs { padding-right: $spacing-xs; }
+.pr-sm { padding-right: $spacing-sm; }
+.pr-md { padding-right: $spacing-md; }
+.pr-lg { padding-right: $spacing-lg; }
+.pr-xl { padding-right: $spacing-xl; }
+
+// ==================== 圆角 ====================
+
+.rounded-none { border-radius: 0; }
+.rounded-xs { border-radius: $radius-xs; }
+.rounded-sm { border-radius: $radius-sm; }
+.rounded-base { border-radius: $radius-base; }
+.rounded-md { border-radius: $radius-md; }
+.rounded-lg { border-radius: $radius-lg; }
+.rounded-xl { border-radius: $radius-xl; }
+.rounded-full { border-radius: $radius-full; }
+
+// ==================== 阴影 ====================
+
+.shadow-xs { box-shadow: $shadow-xs; }
+.shadow-sm { box-shadow: $shadow-sm; }
+.shadow-base { box-shadow: $shadow-base; }
+.shadow-md { box-shadow: $shadow-md; }
+.shadow-lg { box-shadow: $shadow-lg; }
+.shadow-xl { box-shadow: $shadow-xl; }
+
+// ==================== 宽度和高度 ====================
+
+.w-full { width: 100%; }
+.w-auto { width: auto; }
+.h-full { height: 100%; }
+.h-auto { height: auto; }
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+// ==================== 显示 ====================
+
+.block { display: block; }
+.inline { display: inline; }
+.inline-block { display: inline-block; }
+.hidden { display: none; }
+
+// ==================== 溢出 ====================
+
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-y-auto { overflow-y: auto; }
+
+// ==================== 不透明度 ====================
+
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+// ==================== 指针 ====================
+
+.cursor-pointer { cursor: pointer; }
+
+// ==================== 适老化工具类 ====================
+
+// 适老化按钮
+.senior-btn {
+  @extend .senior-btn;
+}
+
+.senior-btn-primary {
+  @extend .senior-btn-primary;
+}
+
+.senior-btn-secondary {
+  @extend .senior-btn-secondary;
+}
+
+.senior-btn-ghost {
+  @extend .senior-btn-ghost;
+}
+
+// 适老化卡片
+.senior-card {
+  @extend .senior-card;
+}
+
+// 适老化文字
+.senior-text-title {
+  @extend .senior-text-title;
+}
+
+.senior-text-subtitle {
+  @extend .senior-text-subtitle;
+}
+
+.senior-text-body {
+  @extend .senior-text-body;
+}
+
+.senior-text-helper {
+  @extend .senior-text-helper;
+}
+
+// 适老化输入框
+.senior-input {
+  @extend .senior-input;
+}
+
+// 适老化列表项
+.senior-list-item {
+  @extend .senior-list-item;
+}
+
+// 适老化间距
+.senior-spacing-xs { margin-bottom: $senior-spacing-xs; }
+.senior-spacing-sm { margin-bottom: $senior-spacing-sm; }
+.senior-spacing-md { margin-bottom: $senior-spacing-md; }
+.senior-spacing-lg { margin-bottom: $senior-spacing-lg; }
+.senior-spacing-xl { margin-bottom: $senior-spacing-xl; }
+
+// 适老化字体大小
+.senior-fs-xs { font-size: $senior-fs-xs; }
+.senior-fs-sm { font-size: $senior-fs-sm; }
+.senior-fs-base { font-size: $senior-fs-base; }
+.senior-fs-lg { font-size: $senior-fs-lg; }
+.senior-fs-xl { font-size: $senior-fs-xl; }
+.senior-fs-2xl { font-size: $senior-fs-2xl; }
+.senior-fs-3xl { font-size: $senior-fs-3xl; }
+
+// 适老化圆角
+.senior-rounded-sm { border-radius: $senior-radius-sm; }
+.senior-rounded-md { border-radius: $senior-radius-md; }
+.senior-rounded-lg { border-radius: $senior-radius-lg; }
+.senior-rounded-xl { border-radius: $senior-radius-xl; }
+
+// 适老化阴影
+.senior-shadow-xs { box-shadow: $senior-shadow-xs; }
+.senior-shadow-sm { box-shadow: $senior-shadow-sm; }
+.senior-shadow-md { box-shadow: $senior-shadow-md; }
+.senior-shadow-lg { box-shadow: $senior-shadow-lg; }
+
+// 高对比度模式
+.senior-high-contrast {
+  @extend .senior-high-contrast;
+}
+
+// 大字体模式
+.senior-large-font {
+  @extend .senior-large-font;
+}
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-default { cursor: default; }
+.cursor-text { cursor: text; }
+
+// ==================== 用户选择 ====================
+
+.user-select-none { user-select: none; }
+.user-select-auto { user-select: auto; }
+
+// ==================== 条件隐藏 ====================
+
+.hide-on-mobile {
+  @media (max-width: 640px) {
+    display: none !important;
+  }
+}
+
+.show-on-mobile {
+  display: none;
+  @media (max-width: 640px) {
+    display: block !important;
+  }
+}

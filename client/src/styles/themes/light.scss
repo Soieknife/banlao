@@ -1,0 +1,181 @@
+/**
+ * 暖阳陪伴 - 亮色主题（温暖亲切风）
+ * 该文件包含所有新设计系统的颜色变量
+ */
+
+// ==================== 主色板（温暖系） ====================
+
+// 主色 - 温暖橙红
+$primary-color: #FF8C42;        // 主色
+$primary-light: #FFE4CC;        // 浅色背景
+$primary-lighter: #FFF3E8;      // 更浅背景
+$primary-dark: #E57C35;         // 深色强调
+
+// 次色 - 浅橙粉
+$secondary-color: #F5956E;      // 辅助色
+$secondary-light: #FCE8DE;      // 浅色背景
+
+// 成功色 - 温暖绿
+$success-color: #6BBF59;        // 成功/积极
+$success-light: #E8F3E1;        // 浅色背景
+
+// 警告色 - 温暖黄
+$warning-color: #F5A826;        // 警告/提醒
+$warning-light: #FFF3D9;        // 浅色背景
+
+// 错误色 - 柔和红
+$error-color: #E17055;          // 错误/危险
+$error-light: #FCE5DC;          // 浅色背景
+
+// 信息色 - 天蓝
+$info-color: #74B9FF;           // 信息/提示
+$info-light: #E8F2FF;           // 浅色背景
+
+// ==================== 中性色（灰阶） ====================
+
+// 背景色
+$bg-primary: #FEFDFB;           // 页面主背景（略带暖意）
+$bg-secondary: #FDF9F5;         // 次要背景
+
+// 卡片背景
+$card-bg: #FFFBF8;              // 卡片背景（白偏暖）
+$card-bg-alt: #FEF7F3;          // 卡片背景（替代）
+$card-bg-hover: #FFF9F3;        // 卡片悬停
+
+// 文字色
+$text-primary: #3D3D3D;         // 主要文字（深灰）
+$text-secondary: #666666;       // 次要文字（中灰）
+$text-tertiary: #999999;        // 辅助文字（浅灰）
+$text-inverse: #FFFFFF;         // 反色文字
+
+// 边框色
+$border-light: #F5E6DB;         // 浅边框
+$border-base: #E8D8C8;          // 基础边框
+$border-dark: #D4C4B8;          // 深边框
+
+// ==================== 字体系统 ====================
+
+// 字体大小 - 使用RPX单位，保持响应式
+$fs-12: 24rpx;    // 极小 - 辅助标签
+$fs-14: 28rpx;    // 小 - 副标题、辅助文字
+$fs-16: 32rpx;    // 正文 - 标准文字
+$fs-18: 36rpx;    // 正文大 - 列表项、正文
+$fs-20: 40rpx;    // 小标题 - 副标题
+$fs-22: 44rpx;    // 标题 - 页面标题
+$fs-24: 48rpx;    // 大标题 - 强调
+$fs-28: 56rpx;    // 超大标题 - 重点标题
+
+// 字体堆栈 - 系统字体
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+
+// 字重
+$fw-normal: 400;
+$fw-medium: 500;
+$fw-semi-bold: 600;
+$fw-bold: 700;
+
+// 行高
+$line-height-tight: 1.2;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.8;
+
+// ==================== 间距系统 ====================
+
+// 间距 - 基于8px倍数系统，但用RPX表示
+$sp-4: 8rpx;      // 4px
+$sp-8: 16rpx;     // 8px
+$sp-12: 24rpx;    // 12px
+$sp-16: 32rpx;    // 16px
+$sp-20: 40rpx;    // 20px
+$sp-24: 48rpx;    // 24px
+$sp-32: 64rpx;    // 32px
+$sp-40: 80rpx;    // 40px
+
+// 简写别名
+$spacing-xs: $sp-8;
+$spacing-sm: $sp-12;
+$spacing-md: $sp-16;
+$spacing-lg: $sp-24;
+$spacing-xl: $sp-32;
+$spacing-2xl: $sp-40;
+
+// ==================== 圆角系统 ====================
+
+// 圆角 - 增加圆润感
+$radius-xs: 8rpx;      // 细微圆角
+$radius-sm: 12rpx;     // 小圆角
+$radius-base: 16rpx;   // 基础圆角
+$radius-md: 20rpx;     // 中圆角
+$radius-lg: 28rpx;     // 大圆角 - 卡片
+$radius-xl: 36rpx;     // 超大圆角 - 按钮
+$radius-full: 9999rpx; // 完全圆形
+
+// ==================== 阴影系统 ====================
+
+// 阴影 - 柔和、自然
+$shadow-xs: 0 1rpx 2rpx rgba(0, 0, 0, 0.04);
+$shadow-sm: 0 2rpx 4rpx rgba(0, 0, 0, 0.06);
+$shadow-base: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+$shadow-md: 0 6rpx 16rpx rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+$shadow-xl: 0 12rpx 32rpx rgba(0, 0, 0, 0.15);
+
+// 内阴影 - 用于按钮按下状态
+$inner-shadow: inset 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+
+// ==================== 动画/过渡系统 ====================
+
+// 过渡/动画时间
+$transition-fastest: 0.1s ease;
+$transition-fast: 0.15s ease;
+$transition-base: 0.2s ease;
+$transition-slow: 0.3s ease;
+$transition-slower: 0.4s ease;
+
+// 缓动函数
+$ease-linear: linear;
+$ease-in: ease-in;
+$ease-out: ease-out;
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ==================== 导出CSS变量（供JS访问） ====================
+
+:root {
+  // 主色
+  --color-primary: #{$primary-color};
+  --color-primary-light: #{$primary-light};
+  --color-primary-lighter: #{$primary-lighter};
+  --color-primary-dark: #{$primary-dark};
+
+  // 次色
+  --color-secondary: #{$secondary-color};
+  --color-secondary-light: #{$secondary-light};
+
+  // 功能色
+  --color-success: #{$success-color};
+  --color-success-light: #{$success-light};
+  --color-warning: #{$warning-color};
+  --color-warning-light: #{$warning-light};
+  --color-error: #{$error-color};
+  --color-error-light: #{$error-light};
+  --color-info: #{$info-color};
+  --color-info-light: #{$info-light};
+
+  // 背景色
+  --color-bg-primary: #{$bg-primary};
+  --color-bg-secondary: #{$bg-secondary};
+  --color-card-bg: #{$card-bg};
+  --color-card-bg-alt: #{$card-bg-alt};
+
+  // 文字色
+  --color-text-primary: #{$text-primary};
+  --color-text-secondary: #{$text-secondary};
+  --color-text-tertiary: #{$text-tertiary};
+  --color-text-inverse: #{$text-inverse};
+
+  // 边框色
+  --color-border-light: #{$border-light};
+  --color-border-base: #{$border-base};
+  --color-border-dark: #{$border-dark};
+}

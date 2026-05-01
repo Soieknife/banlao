@@ -1,0 +1,134 @@
+/**
+ * 排版系统
+ * 定义文字样式的标准类
+ */
+
+// 页面标题
+.page-title {
+  font-size: $fs-24;
+  font-weight: $fw-bold;
+  color: $text-primary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-md;
+}
+
+// 卡片标题
+.card-title {
+  font-size: $fs-22;
+  font-weight: $fw-bold;
+  color: $text-primary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-sm;
+}
+
+// 副标题
+.subtitle {
+  font-size: $fs-20;
+  font-weight: $fw-semi-bold;
+  color: $text-secondary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-sm;
+}
+
+// 正文
+.body-text {
+  font-size: $fs-18;
+  font-weight: $fw-normal;
+  color: $text-primary;
+  line-height: $line-height-normal;
+}
+
+// 正文大
+.body-text-lg {
+  font-size: $fs-18;
+  font-weight: $fw-medium;
+  color: $text-primary;
+  line-height: $line-height-normal;
+}
+
+// 辅助文字
+.helper-text {
+  font-size: $fs-14;
+  font-weight: $fw-normal;
+  color: $text-tertiary;
+  line-height: $line-height-normal;
+}
+
+// 标签
+.label-text {
+  font-size: $fs-12;
+  font-weight: $fw-medium;
+  color: $text-secondary;
+  line-height: $line-height-tight;
+}
+
+// 强调文字
+.emphasis-text {
+  font-weight: $fw-semi-bold;
+  color: $primary-color;
+}
+
+// 错误文字
+.error-text {
+  color: $error-color;
+}
+
+// 成功文字
+.success-text {
+  color: $success-color;
+}
+
+// 警告文字
+.warning-text {
+  color: $warning-color;
+}
+
+// 信息文字
+.info-text {
+  color: $info-color;
+}
+
+// 禁用文字
+.disabled-text {
+  color: $text-tertiary;
+}
+
+// 截断文字
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行截断
+@mixin truncate-lines($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+// 文本对齐
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+// 文本转换
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+.text-lowercase {
+  text-transform: lowercase;
+}
+
+.text-capitalize {
+  text-transform: capitalize;
+}

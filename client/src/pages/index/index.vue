@@ -1,12 +1,12 @@
 <template>
-	<view class="page-container home-page">
+	<view class="page-container home-page senior-high-contrast senior-large-font">
 		<AppSidebar active-path="/pages/index/index" />
 
-		<view class="hero card-elder">
+		<view class="hero senior-card">
 			<view class="hero-top">
 				<view>
-					<view class="text-title">{{ greetingTitle }}</view>
-					<view class="text-helper">{{ isChild ? '看看今天家人的状态' : '常用功能已经为您排好，轻松一点就能用' }}</view>
+					<view class="senior-text-title">{{ greetingTitle }}</view>
+					<view class="senior-text-helper">{{ isChild ? '看看今天家人的状态' : '常用功能已经为您排好，轻松一点就能用' }}</view>
 				</view>
 				<view v-if="heroChipText" class="hero-chip" :class="{ warning: !isChild && pendingRequests.length > 0 }">
 					{{ heroChipText }}
@@ -15,42 +15,42 @@
 			<view class="hero-actions">
 				<button
 					v-if="isChild"
-					class="btn-elder small-btn"
+					class="senior-btn senior-btn-primary"
 					@click="primaryElder ? goElderDetail(primaryElder) : openBind()"
 				>
 					{{ primaryElder ? '查看守护详情' : '去绑定长辈' }}
 				</button>
-				<button v-else-if="pendingRequests.length > 0" class="btn-elder small-btn" @click="openPendingRequests">
+				<button v-else-if="pendingRequests.length > 0" class="senior-btn senior-btn-primary" @click="openPendingRequests">
 					查看绑定申请
 				</button>
-				<button class="btn-elder light-btn small-btn" @click="handleLogout">退出登录</button>
+				<button class="senior-btn senior-btn-ghost" @click="handleLogout">退出登录</button>
 			</view>
 		</view>
 
 		<template v-if="isChild">
-			<view class="card-elder">
+			<view class="senior-card">
 				<view class="section-head">
 					<view>
-						<view class="text-title">守护中的长辈</view>
-						<view class="text-helper">随时看看家人的提醒、紧急联系人和会员情况</view>
+						<view class="senior-text-title">守护中的长辈</view>
+						<view class="senior-text-helper">随时看看家人的提醒、紧急联系人和会员情况</view>
 					</view>
-					<button class="btn-elder compact-btn" @click="openBind">绑定长辈</button>
+					<button class="senior-btn senior-btn-secondary" @click="openBind">绑定长辈</button>
 				</view>
 
 				<view v-if="loading" class="loading-state">
-					<text>加载中...</text>
+					<text class="senior-text-body">加载中...</text>
 				</view>
 				<view v-else-if="elders.length === 0" class="empty-state">
-					<view class="text-content">还没有绑定长辈</view>
-					<view class="text-helper">发起绑定申请后，让长辈输入验证码确认即可。</view>
+					<view class="senior-text-body">还没有绑定长辈</view>
+					<view class="senior-text-helper">发起绑定申请后，让长辈输入验证码确认即可。</view>
 				</view>
 				<view v-else class="elder-list">
-					<view v-for="elder in elders" :key="elder.id" class="elder-card" @click="goElderDetail(elder)">
+					<view v-for="elder in elders" :key="elder.id" class="senior-list-item" @click="goElderDetail(elder)">
 						<view class="elder-main">
 							<view class="avatar">{{ (elder.nickname || '长辈').slice(0, 1) }}</view>
 							<view class="elder-info">
-								<view class="elder-name">{{ elder.nickname || elder.username }}</view>
-								<view class="text-helper">账号：{{ elder.username }}</view>
+								<view class="elder-name senior-text-body">{{ elder.nickname || elder.username }}</view>
+								<view class="senior-text-helper">账号：{{ elder.username }}</view>
 							</view>
 						</view>
 						<view class="elder-tags">
@@ -64,28 +64,28 @@
 				</view>
 			</view>
 
-			<view class="card-elder">
+			<view class="senior-card">
 				<view class="section-head">
 					<view>
-						<view class="text-title">绑定申请进度</view>
-						<view class="text-helper">发起后会保留在这里，方便随时查看验证码和处理结果</view>
+						<view class="senior-text-title">绑定申请进度</view>
+						<view class="senior-text-helper">发起后会保留在这里，方便随时查看验证码和处理结果</view>
 					</view>
 					<view v-if="childPendingCount > 0" class="hero-chip warning">{{ childPendingCount }} 条待确认</view>
 				</view>
 
 				<view v-if="bindRequestsLoading" class="loading-state">
-					<text>加载中...</text>
+					<text class="senior-text-body">加载中...</text>
 				</view>
 				<view v-else-if="bindRequests.length === 0" class="empty-state">
-					<view class="text-content">还没有绑定申请记录</view>
-					<view class="text-helper">您发起的绑定申请、验证码和处理状态都会显示在这里。</view>
+					<view class="senior-text-body">还没有绑定申请记录</view>
+					<view class="senior-text-helper">您发起的绑定申请、验证码和处理状态都会显示在这里。</view>
 				</view>
 				<view v-else class="bind-request-list">
-					<view v-for="item in bindRequests" :key="item.id" class="bind-request-card">
+					<view v-for="item in bindRequests" :key="item.id" class="bind-request-card senior-card">
 						<view class="bind-request-top">
 							<view>
-								<view class="elder-name">{{ item.elder_nickname || item.elder_username }}</view>
-								<view class="text-helper">账号：{{ item.elder_username }}</view>
+								<view class="elder-name senior-text-body">{{ item.elder_nickname || item.elder_username }}</view>
+								<view class="senior-text-helper">账号：{{ item.elder_username }}</view>
 							</view>
 							<view class="request-status" :class="getRequestStatusClass(item.status)">
 								{{ formatRequestStatus(item.status) }}
@@ -93,11 +93,11 @@
 						</view>
 
 						<view class="request-meta">
-							<view v-if="item.verify_code" class="request-code">验证码：{{ item.verify_code }}</view>
-							<view class="text-helper">
+							<view v-if="item.verify_code" class="request-code senior-text-body">验证码：{{ item.verify_code }}</view>
+							<view class="senior-text-helper">
 								{{ item.status === 'pending' ? `有效期至：${formatTime(item.expires_at)}` : `申请时间：${formatTime(item.created_at)}` }}
 							</view>
-							<view v-if="item.status === 'approved'" class="text-helper">长辈已确认绑定，可以在上方查看守护详情。</view>
+							<view v-if="item.status === 'approved'" class="senior-text-helper">长辈已确认绑定，可以在上方查看守护详情。</view>
 							<view v-else-if="item.status === 'rejected'" class="text-helper">本次申请已被拒绝，如仍需绑定可重新发起。</view>
 							<view v-else-if="item.status === 'expired'" class="text-helper">验证码已过期，需要重新发起绑定申请。</view>
 							<view v-else class="text-helper">请让长辈在首页或绑定确认页输入验证码完成确认。</view>
@@ -113,73 +113,78 @@
 		</template>
 
 		<template v-else>
-			<view class="card-elder bind-alert-card" :class="{ highlighted: pendingRequests.length > 0 }">
+			<view class="senior-card bind-alert-card" :class="{ highlighted: pendingRequests.length > 0 }">
 				<view class="section-head">
 					<view>
-						<view class="text-title">{{ pendingRequests.length > 0 ? `有 ${pendingRequests.length} 条绑定申请待处理` : '家人绑定入口' }}</view>
-						<view class="text-helper">
+						<view class="senior-text-title">{{ pendingRequests.length > 0 ? `有 ${pendingRequests.length} 条绑定申请待处理` : '家人绑定入口' }}</view>
+						<view class="senior-text-helper">
 							{{ pendingRequests.length > 0 ? '请核对家人信息后输入验证码确认绑定。' : '家人发起绑定后，这里会第一时间提醒您，也可以主动进入查看。' }}
 						</view>
 					</view>
-					<button class="btn-elder compact-btn" @click="openPendingRequests">
+					<button class="senior-btn senior-btn-secondary" @click="openPendingRequests">
 						{{ pendingRequests.length > 0 ? '立即查看' : '查看申请' }}
 					</button>
 				</view>
 
 				<view v-if="pendingRequests.length > 0" class="bind-alert-list">
-					<view v-for="item in elderPendingPreview" :key="item.id" class="pending-brief">
-						<view class="pending-brief-name">{{ item.child_nickname || item.child_username }}</view>
-						<view class="text-helper">账号：{{ item.child_username }}</view>
-						<view class="text-helper">有效期至：{{ formatTime(item.expires_at) }}</view>
+					<view v-for="item in elderPendingPreview" :key="item.id" class="pending-brief senior-list-item">
+						<view class="pending-brief-name senior-text-body">{{ item.child_nickname || item.child_username }}</view>
+						<view class="senior-text-helper">账号：{{ item.child_username }}</view>
+						<view class="senior-text-helper">有效期至：{{ formatTime(item.expires_at) }}</view>
 					</view>
-					<view v-if="pendingRequests.length > elderPendingPreview.length" class="text-helper">
+					<view v-if="pendingRequests.length > elderPendingPreview.length" class="senior-text-helper">
 						还有 {{ pendingRequests.length - elderPendingPreview.length }} 条申请待查看
 					</view>
 				</view>
 			</view>
 
 			<view class="grid-container">
-				<view class="grid-item card-elder emergency-btn" @click="handleEmergency">
-					<view class="icon-wrap"><text class="grid-emoji">🚨</text></view>
-					<view class="text-title">紧急呼救</view>
-					<view class="text-helper">自动通知子女并拨打紧急联系人</view>
+				<view class="grid-item senior-card emergency-btn" @click="handleEmergency">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🚨</text></view>
+					<view class="senior-text-title">紧急呼救</view>
+					<view class="senior-text-helper">自动通知子女并拨打紧急联系人</view>
 				</view>
-				<view class="grid-item card-elder" @click="navigateTo('/pages/ai/ai')">
-					<view class="icon-wrap"><text class="grid-emoji">🤖</text></view>
-					<view class="text-title">暖阳陪聊</view>
-					<view class="text-helper">AI 语音智能对话</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/ai/ai')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🤖</text></view>
+					<view class="senior-text-title">暖阳陪聊</view>
+					<view class="senior-text-helper">AI 语音智能对话</view>
 				</view>
-				<view class="grid-item card-elder" @click="navigateTo('/pages/reminders/reminders')">
-					<view class="icon-wrap"><text class="grid-emoji">🔔</text></view>
-					<view class="text-title">提醒事项</view>
-					<view class="text-helper">老人和家人都能添加</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/chat/chat-list')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">💬</text></view>
+					<view class="senior-text-title">家人聊天</view>
+					<view class="senior-text-helper">与家人实时对话</view>
 				</view>
-				<view class="grid-item card-elder" @click="navigateTo('/pages/health/health')">
-					<view class="icon-wrap"><text class="grid-emoji">💊</text></view>
-					<view class="text-title">用药管理</view>
-					<view class="text-helper">服药记录与识药助手</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/reminders/reminders')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🔔</text></view>
+					<view class="senior-text-title">提醒事项</view>
+					<view class="senior-text-helper">老人和家人都能添加</view>
 				</view>
-				<view class="grid-item card-elder" @click="navigateTo('/pages/life/life')">
-					<view class="icon-wrap"><text class="grid-emoji">☀️</text></view>
-					<view class="text-title">生活查询</view>
-					<view class="text-helper">天气与常用电话</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/health/health')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">💊</text></view>
+					<view class="senior-text-title">用药管理</view>
+					<view class="senior-text-helper">服药记录与识药助手</view>
 				</view>
-				<view class="grid-item card-elder" @click="navigateTo('/pages/profile/profile')">
-					<view class="icon-wrap"><text class="grid-emoji">👤</text></view>
-					<view class="text-title">个人信息</view>
-					<view class="text-helper">手机号、家人和紧急联系人</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/life/life')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">☀️</text></view>
+					<view class="senior-text-title">生活查询</view>
+					<view class="senior-text-helper">天气与常用电话</view>
+				</view>
+				<view class="grid-item senior-card" @click="navigateTo('/pages/profile/profile')">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">👤</text></view>
+					<view class="senior-text-title">个人信息</view>
+					<view class="senior-text-helper">手机号、家人和紧急联系人</view>
 				</view>
 			</view>
 		</template>
 
 		<view v-if="showBindModal" class="modal-overlay">
-			<view class="modal card-elder">
-				<view class="text-title">绑定长辈账号</view>
-				<view class="text-helper">输入长辈用户名，系统会生成验证码，长辈在同一个应用里确认即可。</view>
-				<input v-model="elderUsername" class="input-elder" placeholder="请输入长辈用户名" />
+			<view class="modal senior-card">
+				<view class="senior-text-title">绑定长辈账号</view>
+				<view class="senior-text-helper">输入长辈用户名，系统会生成验证码，长辈在同一个应用里确认即可。</view>
+				<input v-model="elderUsername" class="senior-input" placeholder="请输入长辈用户名" />
 				<view class="modal-actions">
-					<button class="btn-elder light-btn" @click="showBindModal = false">取消</button>
-					<button class="btn-elder" @click="requestBind">发起绑定</button>
+					<button class="senior-btn senior-btn-ghost" @click="showBindModal = false">取消</button>
+					<button class="senior-btn senior-btn-primary" @click="requestBind">发起绑定</button>
 				</view>
 			</view>
 		</view>
@@ -455,8 +460,9 @@ onShow(() => {
 }
 
 .hero {
-	background: linear-gradient(135deg, $card-bg 0%, $main-color-light 100%);
-	border: $border-width solid $main-color-light;
+	background: linear-gradient(135deg, $card-bg 0%, $primary-lighter 100%);
+	border: 1rpx solid $border-light;
+	border-radius: $radius-lg;
 }
 
 .hero-top,
@@ -488,16 +494,17 @@ onShow(() => {
 
 .hero-chip {
 	padding: $spacing-xs $spacing-sm;
-	border-radius: $radius-circle;
+	border-radius: $radius-full;
 	font-size: $font-size-xs;
 	font-weight: $font-weight-bold;
-	background-color: $secondary-color-light;
+	background-color: $secondary-light;
 	color: $secondary-color;
+	box-shadow: $shadow-xs;
 }
 
 .hero-chip.warning {
-	background-color: #FFF3E0;
-	color: #C96B00;
+	background-color: $warning-light;
+	color: $warning-color;
 }
 
 .elder-list {
@@ -515,26 +522,31 @@ onShow(() => {
 .elder-card {
 	padding: $spacing-base;
 	border-radius: $radius-base;
-	background-color: $card-bg-alt;
+	background-color: $card-bg;
 	gap: $spacing-sm;
 	transition: all $transition-base;
-	
+	border: 1rpx solid $border-light;
+	box-shadow: $shadow-xs;
+
 	&:active {
-		background-color: $input-bg;
+		background-color: $card-bg-hover;
+		box-shadow: $shadow-sm;
+		transform: translateY(-2rpx);
 	}
 }
 
 .avatar {
 	width: 88rpx;
 	height: 88rpx;
-	border-radius: 50%;
-	background-color: $main-color-light;
-	color: $main-color;
+	border-radius: $radius-full;
+	background: linear-gradient(135deg, $primary-light 0%, $primary-lighter 100%);
+	color: $primary-color;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: $font-size-base;
 	font-weight: $font-weight-bold;
+	box-shadow: $shadow-xs;
 }
 
 .elder-info {
@@ -571,7 +583,9 @@ onShow(() => {
 .pending-brief {
 	padding: $spacing-base;
 	border-radius: $radius-base;
-	background-color: $card-bg-alt;
+	background-color: $card-bg;
+	border: 1rpx solid $border-light;
+	box-shadow: $shadow-xs;
 }
 
 .request-meta,
@@ -582,37 +596,38 @@ onShow(() => {
 
 .request-status {
 	padding: $spacing-xs $spacing-sm;
-	border-radius: $radius-circle;
+	border-radius: $radius-sm;
 	font-size: $font-size-xs;
 	font-weight: $font-weight-bold;
 }
 
 .request-status.pending {
-	background-color: #FFF5E6;
-	color: $secondary-color;
+	background-color: $warning-light;
+	color: $warning-color;
 }
 
 .request-status.approved {
-	background-color: #ECFDF3;
-	color: #177245;
+	background-color: $success-light;
+	color: $success-color;
 }
 
 .request-status.rejected,
 .request-status.expired {
-	background-color: #FFF1F2;
-	color: #C2410C;
+	background-color: $error-light;
+	color: $error-color;
 }
 
 .request-code {
 	font-size: $font-size-base;
 	font-weight: $font-weight-bold;
-	color: $main-color;
+	color: $primary-color;
 	letter-spacing: 4rpx;
 }
 
 .bind-alert-card.highlighted {
-	background: linear-gradient(135deg, #FFF9EE 0%, #FFFFFF 100%);
-	border: 2rpx solid #F1D7A5;
+	background: linear-gradient(135deg, $primary-lighter 0%, $card-bg 100%);
+	border: 2rpx solid $border-light;
+	box-shadow: $shadow-md;
 }
 
 .pending-brief-name {

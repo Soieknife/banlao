@@ -161,6 +161,58 @@ function initSqliteTables(db) {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        db.run(`CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            elder_id INTEGER,
+            child_id INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_message_at DATETIME
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER,
+            sender_id INTEGER,
+            sender_role TEXT,
+            message_type TEXT DEFAULT 'text',
+            content TEXT,
+            attachments TEXT,
+            is_read INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS chat_unread_count (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            session_id INTEGER,
+            unread_count INTEGER DEFAULT 0
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS chat_message_recalls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message_id INTEGER,
+            recalled_by INTEGER,
+            reason TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            session_name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS ai_chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER,
+            sender_type TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         sqliteEnsureColumn(db, 'users', 'is_vip', 'INTEGER DEFAULT 0');
         sqliteEnsureColumn(db, 'users', 'vip_expire', 'DATETIME');
         sqliteEnsureColumn(db, 'relations', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
@@ -197,6 +249,13 @@ function initSqliteTables(db) {
         db.run(`CREATE INDEX IF NOT EXISTS idx_bind_requests_elder_status ON bind_requests(elder_id, status, created_at)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_bind_requests_child_status ON bind_requests(child_id, status, created_at)`);
         db.run(`CREATE INDEX IF NOT EXISTS idx_med_ocr_user_time ON medication_ocr_records(user_id, created_at)`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_chat_sessions_users ON chat_sessions(elder_id, child_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id, created_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_sender ON chat_messages(sender_id)`);
+        db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_chat_unread_user_session ON chat_unread_count(user_id, session_id)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_is_read ON chat_messages(is_read)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_chat_sessions(user_id, updated_at)`);
+        db.run(`CREATE INDEX IF NOT EXISTS idx_ai_messages_session ON ai_chat_messages(session_id, created_at)`);
 
         seedAdminUserSqlite(db);
     });
@@ -417,6 +476,58 @@ async function initPostgresSchema(db) {
         created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 
+    await db.run(`CREATE TABLE IF NOT EXISTS chat_sessions (
+        id BIGSERIAL PRIMARY KEY,
+        elder_id BIGINT,
+        child_id BIGINT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        last_message_at TIMESTAMPTZ
+    )`);
+
+    await db.run(`CREATE TABLE IF NOT EXISTS chat_messages (
+        id BIGSERIAL PRIMARY KEY,
+        session_id BIGINT,
+        sender_id BIGINT,
+        sender_role TEXT,
+        message_type TEXT DEFAULT 'text',
+        content TEXT,
+        attachments TEXT,
+        is_read INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    await db.run(`CREATE TABLE IF NOT EXISTS chat_unread_count (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT,
+        session_id BIGINT,
+        unread_count INTEGER DEFAULT 0
+    )`);
+
+    await db.run(`CREATE TABLE IF NOT EXISTS chat_message_recalls (
+        id BIGSERIAL PRIMARY KEY,
+        message_id BIGINT,
+        recalled_by BIGINT,
+        reason TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    await db.run(`CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT,
+        session_name TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
+    await db.run(`CREATE TABLE IF NOT EXISTS ai_chat_messages (
+        id BIGSERIAL PRIMARY KEY,
+        session_id BIGINT,
+        sender_type TEXT,
+        content TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
     await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_vip INTEGER DEFAULT 0`);
     await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_expire TIMESTAMPTZ`);
     await db.run(`ALTER TABLE relations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
@@ -450,6 +561,13 @@ async function initPostgresSchema(db) {
     await db.run(`CREATE INDEX IF NOT EXISTS idx_bind_requests_elder_status ON bind_requests(elder_id, status, created_at)`);
     await db.run(`CREATE INDEX IF NOT EXISTS idx_bind_requests_child_status ON bind_requests(child_id, status, created_at)`);
     await db.run(`CREATE INDEX IF NOT EXISTS idx_med_ocr_user_time ON medication_ocr_records(user_id, created_at)`);
+    await db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_chat_sessions_users ON chat_sessions(elder_id, child_id)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id, created_at)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_sender ON chat_messages(sender_id)`);
+    await db.run(`CREATE UNIQUE INDEX IF NOT EXISTS uidx_chat_unread_user_session ON chat_unread_count(user_id, session_id)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_chat_messages_is_read ON chat_messages(is_read)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_chat_sessions(user_id, updated_at)`);
+    await db.run(`CREATE INDEX IF NOT EXISTS idx_ai_messages_session ON ai_chat_messages(session_id, created_at)`);
 
     await seedAdminUserPostgres(db);
     console.log('已连接到 Postgres 数据库');

@@ -22,6 +22,7 @@
 import { ref } from 'vue';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
+import config from '../../config';
 
 const form = ref({
 	username: '',
@@ -106,6 +107,9 @@ const handleLogin = async () => {
 				// 如果检查失败，仍然跳转到首页
 				uni.reLaunch({ url: '/pages/index/index' });
 			}
+		} else if (res.data.user.role === 'admin') {
+				// 管理员直接跳转到前端管理后台
+				uni.reLaunch({ url: '/pages/admin/index' });
 		} else {
 			uni.reLaunch({ url: '/pages/index/index' });
 		}
