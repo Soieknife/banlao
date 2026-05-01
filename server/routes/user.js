@@ -74,18 +74,63 @@ router.post('/login', (req, res) => {
         }
 
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'warm_sun_secret', { expiresIn: '7d' });
-        res.success({
-            token,
-            user: {
-                id: user.id,
-                username: user.username,
-                role: user.role,
-                nickname: user.nickname,
-                is_vip: user.is_vip,
-                vip_expire: user.vip_expire
+        const now = new Date().toISOString();
+        db.run(
+            `UPDATE users SET is_logged_in = 1, last_login_at = ?, last_logout_at = NULL WHERE id = ?`,
+            [now, user.id],
+            (updateErr) => {
+                if (updateErr) {
+                    return res.error('登录状态更新失败', 500);
+                }
+                res.success({
+                    token,
+                    user: {
+                        id: user.id,
+                        username: user.username,
+                        role: user.role,
+                        nickname: user.nickname,
+                        is_vip: user.is_vip,
+                        vip_expire: user.vip_expire,
+                        is_logged_in: 1,
+                        last_login_at: now
+                    }
+                }, '登录成功');
             }
-        }, '登录成功');
+        );
     });
+});
+
+router.get('/session-status', require('../middleware/auth'), (req, res) => {
+    const sql = `SELECT id, username, role, nickname, is_vip, vip_expire, is_logged_in, last_login_at, last_logout_at FROM users WHERE id = ?`;
+    db.get(sql, [req.user.id], (err, user) => {
+        if (err) {
+            return res.error(err.message, 500);
+        }
+        if (!user) {
+            return res.error('用户不存在', 404);
+        }
+        res.success({
+            is_logged_in: Number(user.is_logged_in) === 1,
+            user
+        });
+    });
+});
+
+router.post('/logout', require('../middleware/auth'), (req, res) => {
+    const now = new Date().toISOString();
+    db.run(
+        `UPDATE users SET is_logged_in = 0, last_logout_at = ? WHERE id = ?`,
+        [now, req.user.id],
+        function(err) {
+            if (err) {
+                return res.error('退出登录失败', 500);
+            }
+            res.success({
+                is_logged_in: false,
+                last_logout_at: now
+            }, '已退出登录');
+        }
+    );
 });
 
 /**

@@ -60,6 +60,7 @@ const loadUserRole = () => {
 const navItems = computed(() => {
 	const items = [
 		{ path: '/pages/index/index', icon: '🏠', label: '首页', desc: '回到主功能入口' },
+		{ path: '/pages/chat/chat-list', icon: '💬', label: '家人聊天', desc: '给家人发消息' },
 		{ path: '/pages/ai/ai', icon: '🤖', label: '暖阳陪聊', desc: '随时说说话' },
 		{ path: '/pages/reminders/reminders', icon: '🔔', label: '提醒事项', desc: '管理日常和用药提醒' },
 		{ path: '/pages/health/health', icon: '💊', label: '用药管理', desc: '服药记录和识药助手' },

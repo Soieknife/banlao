@@ -1,53 +1,28 @@
 <script>
-import { createPinia } from 'pinia'
 import { useChatStore } from '@/stores/chat'
 import { useThemeStore } from '@/stores/theme'
+import { syncSessionWithServer } from '@/utils/session'
 
 export default {
-	setup() {
-		const pinia = createPinia()
-		const themeStore = useThemeStore()
-
-		// 初始化主题
-		themeStore.initTheme()
-
-		return {
-			pinia,
-			themeStore
-		}
-	},
 	onLaunch: function() {
 		console.log('App Launch')
 
-		// 初始化Pinia
-		const pinia = createPinia()
-		uni.setStorageSync('pinia', pinia)
-
 		// 初始化主题
 		const themeStore = useThemeStore()
 		themeStore.initTheme()
 	},
-	onShow: function() {
+	onShow: async function() {
 		console.log('App Show')
-
-		// 检查用户是否已登录，如果已登录则初始化聊天连接
-		const token = uni.getStorageSync('token')
-		const userId = uni.getStorageSync('userId')
-
-		if (token && userId) {
-			const chatStore = useChatStore()
-			if (!chatStore.isConnected) {
-				// 初始化WebSocket连接
-				const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000'
-				const wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://')
-
-				chatStore.initSocket(wsUrl, userId, token)
-				chatStore.loadSessions()
-			}
-		}
+		const chatStore = useChatStore()
+		await syncSessionWithServer(chatStore, {
+			redirectToHomeWhenAuthenticated: true,
+			redirectToLoginWhenUnauthenticated: true
+		})
 	},
 	onHide: function() {
 		console.log('App Hide')
+		const chatStore = useChatStore()
+		chatStore.stopGlobalAnnouncer()
 	}
 }
 </script>
@@ -66,7 +41,7 @@ export default {
 
 	.page-container {
 		padding: $spacing-base;
-		min-height: 100vh;
+		min-height: 100%;
 		background-color: $bg-color;
 	}
 

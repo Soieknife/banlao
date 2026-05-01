@@ -183,6 +183,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
+import { useChatStore } from '@/stores/chat';
+import { logoutWithServer } from '@/utils/session';
 
 // 状态管理
 const activeTab = ref('overview');
@@ -212,6 +214,7 @@ const settingValue = ref('');
 const showVipModal = ref(false);
 const selectedUserId = ref('');
 const vipDays = ref('');
+const chatStore = useChatStore();
 
 // 格式化日期
 const formatDate = (dateStr) => {
@@ -357,9 +360,8 @@ const confirmSetVip = async () => {
 };
 
 // 退出登录
-const handleLogout = () => {
-	uni.removeStorageSync('token');
-	uni.removeStorageSync('user');
+const handleLogout = async () => {
+	await logoutWithServer(chatStore);
 	uni.reLaunch({ url: '/pages/login/login' });
 };
 

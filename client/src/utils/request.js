@@ -6,6 +6,7 @@
  * @param {Object} options - 额外选项
  */
 import config from '../config';
+import { clearAuthStorage } from './auth';
 
 // 请求队列管理
 const requestQueue = new Set();
@@ -55,10 +56,9 @@ export const request = (url, method = 'GET', data = {}, options = {}) => {
                 
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     resolve(res.data);
-                } else if (res.statusCode === 401) {
+                } else if (res.statusCode === 401 || res.statusCode === 403) {
                     // 未授权，跳转到登录页
-                    uni.removeStorageSync('token');
-                    uni.removeStorageSync('user');
+                    clearAuthStorage();
                     uni.reLaunch({ url: '/pages/login/login' });
                     reject({ message: '登录已过期，请重新登录' });
                 } else {

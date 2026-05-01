@@ -34,7 +34,10 @@
 						<view class="senior-text-title">守护中的长辈</view>
 						<view class="senior-text-helper">随时看看家人的提醒、紧急联系人和会员情况</view>
 					</view>
-					<button class="senior-btn senior-btn-secondary" @click="openBind">绑定长辈</button>
+					<view class="section-actions">
+						<button class="senior-btn senior-btn-secondary" @click="navigateTo('/pages/chat/chat-list')">家人聊天</button>
+						<button class="senior-btn senior-btn-secondary" @click="openBind">绑定长辈</button>
+					</view>
 				</view>
 
 				<view v-if="loading" class="loading-state">
@@ -197,6 +200,8 @@ import { onShow } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
 import AppSidebar from '../../components/AppSidebar.vue';
+import { useChatStore } from '@/stores/chat';
+import { logoutWithServer } from '@/utils/session';
 
 const user = ref({});
 const loading = ref(false);
@@ -207,6 +212,7 @@ const pendingRequests = ref([]);
 const announcedPendingCount = ref(0);
 const showBindModal = ref(false);
 const elderUsername = ref('');
+const chatStore = useChatStore();
 
 const isChild = computed(() => user.value.role === 'child');
 const primaryElder = computed(() => elders.value[0] || null);
@@ -397,10 +403,9 @@ const handleLogout = () => {
 	uni.showModal({
 		title: '退出登录',
 		content: '确定要退出当前账号吗？',
-		success: (res) => {
+		success: async (res) => {
 			if (res.confirm) {
-				uni.removeStorageSync('token');
-				uni.removeStorageSync('user');
+				await logoutWithServer(chatStore);
 				uni.reLaunch({ url: '/pages/login/login' });
 			}
 		}
@@ -445,7 +450,6 @@ const handleEmergency = () => {
 
 onMounted(() => {
 	if (!loadUser()) return;
-	speak(`欢迎回来，${user.value.nickname || user.value.username || '朋友'}`);
 });
 
 onShow(() => {
@@ -482,7 +486,8 @@ onShow(() => {
 
 .hero-actions,
 .elder-list,
-.elder-tags {
+.elder-tags,
+.section-actions {
 	display: flex;
 	flex-direction: column;
 }
@@ -490,6 +495,10 @@ onShow(() => {
 .hero-actions {
 	gap: $spacing-sm;
 	margin-top: $spacing-sm;
+}
+
+.section-actions {
+	gap: $spacing-xs;
 }
 
 .hero-chip {

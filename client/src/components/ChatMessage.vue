@@ -9,7 +9,8 @@
     <view :class="['message-bubble-wrapper', isMine ? 'own' : 'other']">
       <!-- 头像 -->
       <view v-if="!isMine" class="message-avatar">
-        <image :src="message.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image v-if="message.avatar" :src="message.avatar" mode="aspectFill" />
+        <text v-else class="avatar-fallback">{{ (message.sender_name || '家').slice(0, 1) }}</text>
       </view>
 
       <!-- 消息内容 -->
@@ -23,6 +24,12 @@
         <text v-if="message.message_type === 'text'" class="message-content">
           {{ message.content }}
         </text>
+
+        <view v-if="message.message_type === 'voice'" class="voice-message" @tap="playVoiceMessage">
+          <text class="voice-icon">{{ isPlaying ? '⏸' : '▶' }}</text>
+          <text class="voice-label">{{ isMine ? '我的语音' : '语音消息' }}</text>
+          <text class="voice-duration">{{ formatDuration(message.attachments?.duration) }}</text>
+        </view>
 
         <!-- 已撤回消息 -->
         <text v-if="message.message_type === 'recalled'" class="message-recalled">
@@ -38,14 +45,15 @@
 
       <!-- 头像（自己的消息） -->
       <view v-if="isMine" class="message-avatar">
-        <image :src="currentUserAvatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image v-if="currentUserAvatar" :src="currentUserAvatar" mode="aspectFill" />
+        <text v-else class="avatar-fallback">我</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 
 const props = defineProps({
@@ -70,6 +78,8 @@ const props = defineProps({
 const isMine = computed(() => {
   return props.message.sender_id === props.currentUserId
 })
+const isPlaying = ref(false)
+let audioContext = null
 
 const formatTime = (timestamp) => {
   const date = dayjs(timestamp)
@@ -91,6 +101,49 @@ const previewImage = (src) => {
     urls: [src]
   })
 }
+
+const formatDuration = (duration) => {
+  const seconds = Math.max(1, Math.round((Number(duration || 0) / 1000)))
+  return `${seconds}″`
+}
+
+const stopAudio = () => {
+  if (audioContext) {
+    audioContext.stop()
+    audioContext.destroy()
+    audioContext = null
+  }
+  isPlaying.value = false
+}
+
+const playVoiceMessage = () => {
+  if (!props.message.content) return
+
+  if (isPlaying.value) {
+    stopAudio()
+    return
+  }
+
+  stopAudio()
+  audioContext = uni.createInnerAudioContext()
+  audioContext.src = props.message.content
+  audioContext.autoplay = true
+  isPlaying.value = true
+
+  audioContext.onEnded(() => {
+    stopAudio()
+  })
+
+  audioContext.onError((error) => {
+    console.error('播放语音消息失败:', error)
+    stopAudio()
+    uni.showToast({ title: '语音播放失败', icon: 'none' })
+  })
+}
+
+onUnmounted(() => {
+  stopAudio()
+})
 </script>
 
 <style scoped lang="scss">
@@ -122,7 +175,7 @@ const previewImage = (src) => {
   display: flex;
   align-items: flex-end;
   gap: 16rpx;
-  margin: 0 20rpx;
+  margin: 0 24rpx;
 
   &.own {
     justify-content: flex-end;
@@ -145,7 +198,7 @@ const previewImage = (src) => {
   justify-content: center;
   box-shadow: $shadow-xs;
   color: $primary-color;
-  font-weight: $fw-bold;
+  font-weight: $font-weight-bold;
   font-size: $font-size-base;
 
   image {
@@ -155,9 +208,15 @@ const previewImage = (src) => {
   }
 }
 
+.avatar-fallback {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $primary-color;
+}
+
 .message-bubble {
-  max-width: 65%;
-  padding: 16rpx 24rpx;
+  max-width: 68%;
+  padding: 18rpx 24rpx;
   border-radius: $radius-lg;
   word-wrap: break-word;
   position: relative;
@@ -173,7 +232,7 @@ const previewImage = (src) => {
   }
 
   &.bubble-other {
-    background-color: $card-bg;
+    background: linear-gradient(180deg, $card-bg 0%, $card-bg-alt 100%);
     color: $text-primary;
     border-bottom-left-radius: $radius-sm;
     box-shadow: $shadow-sm;
@@ -190,7 +249,7 @@ const previewImage = (src) => {
 .sender-name {
   font-size: $font-size-xs;
   color: $text-tertiary;
-  margin-bottom: $spacing-xs;
+  margin-bottom: 2rpx;
 }
 
 .message-content {
@@ -202,6 +261,28 @@ const previewImage = (src) => {
 .message-recalled {
   font-size: $font-size-sm;
   color: $text-tertiary;
+}
+
+.voice-message {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 220rpx;
+}
+
+.voice-icon {
+  font-size: $font-size-sm;
+}
+
+.voice-label {
+  flex: 1;
+  font-size: $font-size-base;
+  line-height: $line-height-normal;
+}
+
+.voice-duration {
+  font-size: $font-size-xs;
+  opacity: 0.8;
 }
 
 .message-image {
@@ -216,6 +297,6 @@ const previewImage = (src) => {
   bottom: 4rpx;
   font-size: 20rpx;
   color: rgba(255, 255, 255, 0.8);
-  font-weight: $fw-bold;
+  font-weight: $font-weight-bold;
 }
 </style>

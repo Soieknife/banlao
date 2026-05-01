@@ -8,6 +8,93 @@ const speechQueue = [];
 let isPlaying = false;
 // 音频上下文实例
 let innerAudioContext = null;
+let androidTts = null;
+let androidTtsReady = false;
+let androidTtsInitializing = false;
+const androidPendingSpeech = [];
+
+const getAppSpeech = () => {
+    if (typeof plus === 'undefined' || !plus.speech) return null;
+    return plus.speech;
+};
+
+const initAndroidTts = (onReady) => {
+    // #ifdef APP-PLUS
+    if (typeof plus === 'undefined' || plus.os?.name !== 'Android') return false;
+    if (androidTtsReady && androidTts) {
+        onReady?.(androidTts);
+        return true;
+    }
+    if (androidTtsInitializing) {
+        if (onReady) androidPendingSpeech.push(onReady);
+        return true;
+    }
+
+    try {
+        androidTtsInitializing = true;
+        if (onReady) androidPendingSpeech.push(onReady);
+        const mainActivity = plus.android.runtimeMainActivity();
+        const TextToSpeech = plus.android.importClass('android.speech.tts.TextToSpeech');
+        const Locale = plus.android.importClass('java.util.Locale');
+        const OnInitListener = plus.android.implements('android.speech.tts.TextToSpeech$OnInitListener', {
+            onInit: (status) => {
+                androidTtsInitializing = false;
+                if (status === 0 && androidTts) {
+                    androidTtsReady = true;
+                    androidTts.setLanguage(Locale.CHINA);
+                    while (androidPendingSpeech.length) {
+                        const callback = androidPendingSpeech.shift();
+                        callback?.(androidTts);
+                    }
+                } else {
+                    androidTtsReady = false;
+                    androidPendingSpeech.length = 0;
+                }
+            }
+        });
+        androidTts = new TextToSpeech(mainActivity, OnInitListener);
+        return true;
+    } catch (error) {
+        console.error('初始化 Android TTS 失败', error);
+        androidTtsInitializing = false;
+        androidTtsReady = false;
+        androidPendingSpeech.length = 0;
+        return false;
+    }
+    // #endif
+
+    return false;
+};
+
+const speakWithAndroidTts = (text, options = {}) => {
+    // #ifdef APP-PLUS
+    const trySpeak = (ttsInstance) => {
+        try {
+            const TextToSpeech = plus.android.importClass('android.speech.tts.TextToSpeech');
+            ttsInstance.speak(text, TextToSpeech.QUEUE_FLUSH, null, `banlao-${Date.now()}`);
+            setTimeout(() => {
+                processQueue();
+            }, Math.max(1200, Math.min(String(text).length * 260, 8000)));
+        } catch (error) {
+            console.error('Android TTS 播报失败', error);
+            processQueue();
+        }
+    };
+
+    if (androidTtsReady && androidTts) {
+        trySpeak(androidTts);
+        return true;
+    }
+
+    const initialized = initAndroidTts((ttsInstance) => {
+        trySpeak(ttsInstance);
+    });
+
+    return initialized;
+    // #endif
+
+    return false;
+};
 
 /**
  * 播放语音
@@ -123,10 +210,39 @@ const processQueue = () => {
     }
     // #endif
 
-    // App 环境下通常需要集成百度/阿里 TTS SDK，这里做简单提示
+    // App 环境下优先使用原生语音播报能力
     // #ifdef APP-PLUS
-    uni.showToast({ title: 'App 语音播报需集成 SDK', icon: 'none' });
-    processQueue();
+    const appSpeech = getAppSpeech();
+    if (appSpeech && typeof appSpeech.speak === 'function') {
+        try {
+            appSpeech.speak(
+                text,
+                () => {
+                    console.log('App 语音播放结束');
+                    processQueue();
+                },
+                (err) => {
+                    console.error('App 语音播放失败', err);
+                    processQueue();
+                },
+                {
+                    volume: options.volume || 1,
+                    speechRate: options.rate || 1,
+                    pitch: options.pitch || 1
+                }
+            );
+        } catch (error) {
+            console.error('App 语音播报调用失败', error);
+            if (!speakWithAndroidTts(text, options)) {
+                processQueue();
+            }
+        }
+    } else {
+        console.warn('当前 App 环境不支持 plus.speech，尝试 Android TTS');
+        if (!speakWithAndroidTts(text, options)) {
+            processQueue();
+        }
+    }
     // #endif
 };
 
@@ -150,6 +266,24 @@ export const stop = () => {
     // #ifdef H5
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+    }
+    // #endif
+
+    // #ifdef APP-PLUS
+    const appSpeech = getAppSpeech();
+    if (appSpeech && typeof appSpeech.stop === 'function') {
+        try {
+            appSpeech.stop();
+        } catch (error) {
+            console.error('停止 App 语音播报失败', error);
+        }
+    }
+    if (androidTts) {
+        try {
+            androidTts.stop();
+        } catch (error) {
+            console.error('停止 Android TTS 失败', error);
+        }
     }
     // #endif
     
@@ -217,6 +351,10 @@ export const isSupported = () => {
     // #endif
     
     // #ifdef APP-PLUS
-    return false;
+    const appSpeech = getAppSpeech();
+    if (appSpeech && typeof appSpeech.speak === 'function') {
+        return true;
+    }
+    return initAndroidTts();
     // #endif
 };
