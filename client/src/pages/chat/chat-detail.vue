@@ -16,7 +16,7 @@
     <scroll-view
       class="messages-list"
       scroll-y
-      :scroll-top="scrollTop"
+      :scroll-top="initialScrollTop"
       @scrolltoupper="loadMoreMessages"
     >
       <view v-if="loading" class="loading-hint">正在加载聊天记录...</view>
@@ -58,8 +58,7 @@ import dayjs from 'dayjs'
 const chatStore = useChatStore()
 const sessionId = ref('')
 const loading = ref(false)
-const scrollTop = ref(0)
-const scrollSeed = ref(1)
+const initialScrollTop = ref(999999)
 const currentUserId = ref(0)
 const userAvatar = ref('')
 const sessionName = ref('聊天')
@@ -67,9 +66,8 @@ const statusBarHeight = ref(0)
 const windowHeight = ref(0)
 const lastMessageCount = ref(0)
 const hasInitializedAnnouncements = ref(false)
-const hasMountedPage = ref(false)
 const hasLoadedSessionMeta = ref(false)
-let refreshTimer = null
+let sendScrollTimer = null
 
 const currentMessages = computed(() => {
   return chatStore.messages[sessionId.value] || []
@@ -94,13 +92,6 @@ const syncSessionName = () => {
     ? session.child_name
     : session.elder_name
   sessionName.value = otherUserName || sessionName.value
-}
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    scrollSeed.value += 1
-    scrollTop.value = scrollSeed.value * 100000
-  })
 }
 
 const uploadVoiceFile = (tempFilePath) => {
@@ -208,23 +199,31 @@ onMounted(async () => {
   userAvatar.value = uni.getStorageSync('userAvatar') || ''
   chatStore.stopGlobalAnnouncer()
   await loadChat(true)
-  scrollToBottom()
-  hasMountedPage.value = true
-  refreshTimer = setInterval(() => {
-    loadChat(false)
-  }, 5000)
 })
 
 onUnmounted(() => {
-  chatStore.leaveSession(sessionId.value)
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
+  if (sendScrollTimer) {
+    clearTimeout(sendScrollTimer)
+    sendScrollTimer = null
   }
+  chatStore.leaveSession(sessionId.value)
   if (currentUserRole.value === 'elder') {
     chatStore.startGlobalAnnouncer()
   }
 })
+
+const scrollToBottomAfterSend = () => {
+  nextTick(() => {
+    initialScrollTop.value += 100000
+    if (sendScrollTimer) {
+      clearTimeout(sendScrollTimer)
+    }
+    sendScrollTimer = setTimeout(() => {
+      initialScrollTop.value += 100000
+      sendScrollTimer = null
+    }, 80)
+  })
+}
 
 const shouldShowTimestamp = (index) => {
   if (index === 0) return true
@@ -317,6 +316,7 @@ const handleSendMessage = async (payload) => {
     })
   } else {
     lastMessageCount.value = currentMessages.value.length
+    scrollToBottomAfterSend()
   }
 }
 
