@@ -66,7 +66,7 @@
             <text class="session-name">{{ getOtherUserName(session) }}</text>
             <text class="session-time">{{ formatTime(session.last_message_at) }}</text>
           </view>
-          <text class="session-message">{{ session.last_message || '[暂无消息]' }}</text>
+          <text class="session-message">{{ formatSessionPreview(session) }}</text>
         </view>
 
       </view>
@@ -179,6 +179,25 @@ const formatTime = (timestamp) => {
   }
 
   return date.format('MM-DD')
+}
+
+const formatVoiceDuration = (duration) => {
+  const seconds = Math.max(1, Math.round(Number(duration || 0) / 1000))
+  return `${seconds}″`
+}
+
+const formatSessionPreview = (session) => {
+  if (!session) return '[暂无消息]'
+  if (session.last_message_type === 'voice') {
+    return `[语音] ${formatVoiceDuration(session.last_message_attachments?.duration)}`
+  }
+  if (session.last_message_type === 'image') {
+    return '图片'
+  }
+  if (session.last_message_type === 'recalled') {
+    return '[已撤回]'
+  }
+  return session.last_message || '[暂无消息]'
 }
 
 const goToChat = (session) => {

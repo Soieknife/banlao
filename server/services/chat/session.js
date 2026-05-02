@@ -42,7 +42,9 @@ async function getUserSessions(userId, limit = 50, offset = 0) {
               u1.nickname as elder_name, u1.role as elder_role,
               u2.nickname as child_name, u2.role as child_role,
               (SELECT COUNT(*) FROM chat_messages WHERE session_id = cs.id AND sender_id != ? AND is_read = 0) as unread_count,
-              (SELECT content FROM chat_messages WHERE session_id = cs.id ORDER BY created_at DESC LIMIT 1) as last_message
+              (SELECT content FROM chat_messages WHERE session_id = cs.id ORDER BY created_at DESC LIMIT 1) as last_message,
+              (SELECT message_type FROM chat_messages WHERE session_id = cs.id ORDER BY created_at DESC LIMIT 1) as last_message_type,
+              (SELECT attachments FROM chat_messages WHERE session_id = cs.id ORDER BY created_at DESC LIMIT 1) as last_message_attachments
        FROM chat_sessions cs
        LEFT JOIN users u1 ON cs.elder_id = u1.id
        LEFT JOIN users u2 ON cs.child_id = u2.id
@@ -52,7 +54,18 @@ async function getUserSessions(userId, limit = 50, offset = 0) {
       [userId, userId, userId, limit, offset],
       (err, rows) => {
         if (err) return reject(err);
-        resolve(rows || []);
+        resolve((rows || []).map((row) => ({
+          ...row,
+          last_message_attachments: row?.last_message_attachments
+            ? (() => {
+                try {
+                  return JSON.parse(row.last_message_attachments);
+                } catch (error) {
+                  return null;
+                }
+              })()
+            : null
+        })));
       }
     );
   });

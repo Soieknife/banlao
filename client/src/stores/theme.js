@@ -42,12 +42,15 @@ export const useThemeStore = defineStore('theme', () => {
   const applyTheme = (theme) => {
     // 当前实现：亮色模式是默认样式
     // 未来实现：可通过CSS类或CSS变量动态切换
-    if (theme === 'dark') {
-      // 在此处添加深色模式样式
-      document.documentElement.classList.add('dark-theme')
-    } else {
-      document.documentElement.classList.remove('dark-theme')
+    // #ifdef H5
+    if (typeof document !== 'undefined' && document.documentElement) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark-theme')
+      } else {
+        document.documentElement.classList.remove('dark-theme')
+      }
     }
+    // #endif
   }
 
   /**

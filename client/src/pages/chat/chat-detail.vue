@@ -1,5 +1,5 @@
 <template>
-  <view class="chat-detail-page">
+  <view class="chat-detail-page" :style="pageStyle">
     <view class="status-bar-spacer" :style="statusBarSpacerStyle"></view>
 
     <!-- 标题栏 -->
@@ -17,8 +17,6 @@
       class="messages-list"
       scroll-y
       :scroll-top="scrollTop"
-      :scroll-into-view="scrollIntoView"
-      scroll-with-animation
       @scrolltoupper="loadMoreMessages"
     >
       <view v-if="loading" class="loading-hint">正在加载聊天记录...</view>
@@ -39,6 +37,7 @@
       </view>
 
       <!-- 底部占位符 -->
+      <view id="chat-bottom-anchor" class="bottom-anchor"></view>
       <view class="bottom-space"></view>
     </scroll-view>
 
@@ -48,8 +47,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useChatStore } from '@/stores/chat'
 import ChatMessage from '@/components/ChatMessage.vue'
 import ChatInput from '@/components/ChatInput.vue'
@@ -60,20 +59,32 @@ const chatStore = useChatStore()
 const sessionId = ref('')
 const loading = ref(false)
 const scrollTop = ref(0)
-const scrollIntoView = ref('')
+const scrollSeed = ref(1)
 const currentUserId = ref(0)
 const userAvatar = ref('')
 const sessionName = ref('聊天')
 const statusBarHeight = ref(0)
+const windowHeight = ref(0)
 const lastMessageCount = ref(0)
+const hasInitializedAnnouncements = ref(false)
+const hasMountedPage = ref(false)
+const hasLoadedSessionMeta = ref(false)
 let refreshTimer = null
 
 const currentMessages = computed(() => {
   return chatStore.messages[sessionId.value] || []
 })
 
+const currentUserRole = computed(() => {
+  return uni.getStorageSync('userRole') || ''
+})
+
 const statusBarSpacerStyle = computed(() => ({
   height: `${statusBarHeight.value}px`
+}))
+
+const pageStyle = computed(() => ({
+  height: windowHeight.value ? `${windowHeight.value}px` : '100vh'
 }))
 
 const syncSessionName = () => {
@@ -86,14 +97,10 @@ const syncSessionName = () => {
 }
 
 const scrollToBottom = () => {
-  setTimeout(() => {
-    scrollTop.value = 999999
-    const lastIndex = currentMessages.value.length - 1
-    const lastMessage = currentMessages.value[lastIndex]
-    if (lastMessage) {
-      scrollIntoView.value = `message-${lastMessage.id}-${lastIndex}`
-    }
-  }, 80)
+  nextTick(() => {
+    scrollSeed.value += 1
+    scrollTop.value = scrollSeed.value * 100000
+  })
 }
 
 const uploadVoiceFile = (tempFilePath) => {
@@ -125,17 +132,55 @@ const uploadVoiceFile = (tempFilePath) => {
   })
 }
 
+const uploadImageFile = (tempFilePath) => {
+  const token = uni.getStorageSync('token')
+  return new Promise((resolve, reject) => {
+    uni.uploadFile({
+      url: `${config.api.baseUrl}/chat/upload-image`,
+      filePath: tempFilePath,
+      name: 'file',
+      header: {
+        Authorization: token ? `Bearer ${token}` : ''
+      },
+      success: (res) => {
+        try {
+          const parsed = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+          if (res.statusCode >= 200 && res.statusCode < 300 && parsed?.data?.url) {
+            resolve(parsed.data.url)
+            return
+          }
+          reject(new Error(parsed?.message || '图片上传失败'))
+        } catch (error) {
+          reject(error)
+        }
+      },
+      fail: (error) => {
+        reject(error)
+      }
+    })
+  })
+}
+
 const loadChat = async (showLoading = true) => {
   if (!sessionId.value) return
   loading.value = showLoading
   try {
-    await chatStore.loadSessions()
-    syncSessionName()
-    const latestMessages = await chatStore.loadMessages(sessionId.value, 50, 0, { markPlayedOnLoad: true })
+    if (!hasLoadedSessionMeta.value) {
+      await chatStore.loadSessions()
+      syncSessionName()
+      hasLoadedSessionMeta.value = true
+    }
+    const latestMessages = await chatStore.loadMessages(sessionId.value, 50, 0, { markPlayedOnLoad: false })
     chatStore.joinSession(sessionId.value)
     const nextCount = latestMessages.length
-    if (showLoading || nextCount > lastMessageCount.value) {
-      scrollToBottom()
+    if (currentUserRole.value === 'elder' && nextCount > 0 && !hasInitializedAnnouncements.value) {
+      const visibleIncomingMessages = latestMessages.filter((message) => Number(message.sender_id) !== currentUserId.value)
+      chatStore.markMessagesAsPlayed(visibleIncomingMessages)
+      hasInitializedAnnouncements.value = true
+    } else if (currentUserRole.value === 'elder' && nextCount > 0) {
+      const startIndex = Math.max(0, lastMessageCount.value)
+      const latestIncomingMessages = latestMessages.slice(startIndex)
+      chatStore.announceMessages(latestIncomingMessages)
     }
     lastMessageCount.value = nextCount
   } catch (error) {
@@ -153,6 +198,7 @@ onLoad((options) => {
 onMounted(async () => {
   const systemInfo = uni.getSystemInfoSync()
   statusBarHeight.value = Number(systemInfo.statusBarHeight || 0)
+  windowHeight.value = Number(systemInfo.windowHeight || 0)
   // #ifdef APP-PLUS
   if (typeof plus !== 'undefined' && plus.navigator && typeof plus.navigator.getStatusbarHeight === 'function') {
     statusBarHeight.value = Number(plus.navigator.getStatusbarHeight() || statusBarHeight.value || 0)
@@ -160,7 +206,10 @@ onMounted(async () => {
   // #endif
   currentUserId.value = Number(uni.getStorageSync('userId'))
   userAvatar.value = uni.getStorageSync('userAvatar') || ''
+  chatStore.stopGlobalAnnouncer()
   await loadChat(true)
+  scrollToBottom()
+  hasMountedPage.value = true
   refreshTimer = setInterval(() => {
     loadChat(false)
   }, 5000)
@@ -172,10 +221,9 @@ onUnmounted(() => {
     clearInterval(refreshTimer)
     refreshTimer = null
   }
-})
-
-onShow(() => {
-  loadChat(false)
+  if (currentUserRole.value === 'elder') {
+    chatStore.startGlobalAnnouncer()
+  }
 })
 
 const shouldShowTimestamp = (index) => {
@@ -234,6 +282,31 @@ const handleSendMessage = async (payload) => {
     } finally {
       uni.hideLoading()
     }
+  } else if (type === 'image') {
+    const tempFilePath = attachments?.tempFilePath
+    if (!tempFilePath) {
+      uni.showToast({
+        title: '未找到图片文件',
+        icon: 'none'
+      })
+      return
+    }
+
+    try {
+      uni.showLoading({ title: '上传图片中...', mask: true })
+      content = await uploadImageFile(tempFilePath)
+      delete attachments.tempFilePath
+    } catch (error) {
+      console.error('上传图片失败:', error)
+      uni.hideLoading()
+      uni.showToast({
+        title: error?.message || '图片上传失败',
+        icon: 'none'
+      })
+      return
+    } finally {
+      uni.hideLoading()
+    }
   }
 
   const success = await chatStore.sendMessage(sessionId.value, content, type, attachments)
@@ -243,10 +316,7 @@ const handleSendMessage = async (payload) => {
       icon: 'none'
     })
   } else {
-    await chatStore.loadSessions()
-    const latestMessages = await chatStore.loadMessages(sessionId.value, 50, 0, { markPlayedOnLoad: true })
-    lastMessageCount.value = latestMessages.length
-    scrollToBottom()
+    lastMessageCount.value = currentMessages.value.length
   }
 }
 
@@ -264,8 +334,8 @@ const goBack = () => {
 .chat-detail-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
   min-height: 0;
+  overflow: hidden;
   background: linear-gradient(180deg, $bg-color 0%, $primary-lighter 100%);
 }
 
@@ -332,6 +402,7 @@ const goBack = () => {
 
 .messages-list {
   flex: 1;
+  min-height: 0;
   padding: 20rpx 0 0;
   overflow-y: auto;
 }
@@ -352,5 +423,9 @@ const goBack = () => {
 
 .bottom-space {
   height: 24rpx;
+}
+
+.bottom-anchor {
+  height: 2rpx;
 }
 </style>

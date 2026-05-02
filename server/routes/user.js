@@ -41,7 +41,8 @@ router.post('/register', (req, res) => {
  * @route POST /api/user/login
  */
 router.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    const username = String(req.body?.username || '').trim();
+    const password = String(req.body?.password || '');
     if (!username || !password) {
         return res.error('参数不完整', 400);
     }
@@ -52,6 +53,7 @@ router.post('/login', (req, res) => {
             return res.error(err.message, 500);
         }
         if (!user) {
+            console.warn(`[Login] 用户不存在: ${username}`);
             return res.error('用户名或密码错误', 401);
         }
 
@@ -70,6 +72,7 @@ router.post('/login', (req, res) => {
         }
 
         if (!isMatch) {
+            console.warn(`[Login] 密码错误: ${username}`);
             return res.error('用户名或密码错误', 401);
         }
 

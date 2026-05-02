@@ -20,6 +20,7 @@ export const useChatStore = defineStore('chat', () => {
   const isAnnouncerRunning = ref(false)
   let announcerTimer = null
   let announcementAudio = null
+  let voiceAnnouncementTimer = null
 
   // 计算属性
   const currentSession = computed(() => {
@@ -82,6 +83,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const stopAnnouncementAudio = () => {
+    if (voiceAnnouncementTimer) {
+      clearTimeout(voiceAnnouncementTimer)
+      voiceAnnouncementTimer = null
+    }
     if (announcementAudio) {
       announcementAudio.stop()
       announcementAudio.destroy()
@@ -104,6 +109,13 @@ export const useChatStore = defineStore('chat', () => {
     })
   }
 
+  const playVoiceAnnouncement = (message, senderName) => {
+    speak(`${senderName}说：`, { immediate: false })
+    voiceAnnouncementTimer = setTimeout(() => {
+      autoPlayVoiceMessage(message)
+    }, 900)
+  }
+
   const announceMessages = (messageList = []) => {
     const token = uni.getStorageSync('token')
     const currentUserId = getCurrentUserId()
@@ -119,8 +131,11 @@ export const useChatStore = defineStore('chat', () => {
       const senderName = message.sender_name || '家人'
       markMessageAsPlayed(message.id)
       if (message.message_type === 'voice') {
-        speak(`${senderName}说：发来了一条语音消息`, { immediate: false })
-        autoPlayVoiceMessage(message)
+        playVoiceAnnouncement(message, senderName)
+        return
+      }
+      if (message.message_type === 'image') {
+        speak(`${senderName}发送了一张图像`, { immediate: false })
         return
       }
       if (message.message_type === 'text' && message.content) {
@@ -138,11 +153,13 @@ export const useChatStore = defineStore('chat', () => {
       const latestSessions = await loadSessions()
       for (const session of latestSessions) {
         const sessionMessages = await loadMessages(session.id, 20, 0, { markPlayedOnLoad: false })
-        const unreadIncomingMessages = sessionMessages.filter((message) => (
-          Number(message.sender_id) !== getCurrentUserId() &&
-          Number(message.is_read) === 0
-        ))
-        announceMessages(unreadIncomingMessages)
+        const shouldIncludeReadMessages = String(currentSessionId.value) === String(session.id)
+        const incomingMessages = sessionMessages.filter((message) => {
+          if (Number(message.sender_id) === getCurrentUserId()) return false
+          if (shouldIncludeReadMessages) return true
+          return Number(message.is_read) === 0
+        })
+        announceMessages(incomingMessages)
       }
     } catch (error) {
       console.error('[Chat] Poll announcements error:', error)
@@ -188,6 +205,33 @@ export const useChatStore = defineStore('chat', () => {
     created_at: message.created_at ?? message.createdAt ?? dayjs().toISOString(),
     updated_at: message.updated_at ?? message.updatedAt ?? message.created_at ?? message.createdAt ?? dayjs().toISOString()
   })
+
+  const setSessionMessages = (sessionId, incomingMessages = []) => {
+    const normalizedMessages = Array.isArray(incomingMessages)
+      ? incomingMessages.map(normalizeMessage)
+      : []
+
+    const existingMessages = messages.value[sessionId]
+    if (!existingMessages) {
+      messages.value[sessionId] = normalizedMessages
+      return messages.value[sessionId]
+    }
+
+    const isSameSnapshot = existingMessages.length === normalizedMessages.length && existingMessages.every((message, index) => {
+      const nextMessage = normalizedMessages[index]
+      return nextMessage
+        && message.id === nextMessage.id
+        && message.updated_at === nextMessage.updated_at
+        && message.is_read === nextMessage.is_read
+        && message.content === nextMessage.content
+    })
+
+    if (!isSameSnapshot) {
+      existingMessages.splice(0, existingMessages.length, ...normalizedMessages)
+    }
+
+    return existingMessages
+  }
 
   // 初始化WebSocket连接
   const initSocket = () => {
@@ -264,13 +308,13 @@ export const useChatStore = defineStore('chat', () => {
     const { markPlayedOnLoad = true } = options
     try {
       const res = await request(`/chat/messages/${sessionId}`, 'GET', { limit, offset }, { showLoading: false })
-      messages.value[sessionId] = Array.isArray(res.data) ? res.data.map(normalizeMessage) : []
+      const sessionMessages = setSessionMessages(sessionId, res.data)
       if (markPlayedOnLoad) {
-        const visibleIncomingMessages = messages.value[sessionId].filter((message) => Number(message.sender_id) !== getCurrentUserId())
+        const visibleIncomingMessages = sessionMessages.filter((message) => Number(message.sender_id) !== getCurrentUserId())
         markMessagesAsPlayed(visibleIncomingMessages)
       }
       unreadCounts.value[sessionId] = 0
-      return messages.value[sessionId]
+      return sessionMessages
     } catch (error) {
       console.error('[Chat] Load messages error:', error)
       throw error
@@ -315,6 +359,8 @@ export const useChatStore = defineStore('chat', () => {
     if (session) {
       session.last_message_at = message.created_at || message.createdAt || message.timestamp || dayjs().toISOString()
       session.last_message = message.content
+      session.last_message_type = message.message_type || message.messageType || 'text'
+      session.last_message_attachments = message.attachments || null
     }
   }
 

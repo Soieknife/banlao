@@ -25,7 +25,11 @@ export const syncSessionWithServer = async (chatStore, options = {}) => {
   }
 
   try {
-    const res = await request('/user/session-status', 'GET', {}, { showLoading: false })
+    const res = await request('/user/session-status', 'GET', {}, {
+      showLoading: false,
+      showErrorToast: false,
+      authRedirect: false
+    })
     const sessionData = res?.data || {}
     const user = sessionData.user || null
     const isLoggedIn = Boolean(sessionData.is_logged_in && user?.id)
@@ -66,7 +70,11 @@ export const syncSessionWithServer = async (chatStore, options = {}) => {
 
 export const logoutWithServer = async (chatStore) => {
   try {
-    await request('/user/logout', 'POST', {}, { showLoading: false })
+    await request('/user/logout', 'POST', {}, {
+      showLoading: false,
+      showErrorToast: false,
+      authRedirect: false
+    })
   } catch (error) {
     console.warn('[Auth] Logout request failed:', error)
   } finally {

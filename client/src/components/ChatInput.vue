@@ -1,32 +1,30 @@
 <template>
   <view class="chat-input-area">
     <view v-if="showRecordingOverlay" class="recording-overlay">
-      <view class="recording-panel">
-        <view class="recording-mic">🎤</view>
-        <text class="recording-title">正在录音</text>
+      <view class="recording-panel" :class="{ canceling: isCancellingRecording }">
+        <view class="recording-mic">{{ isCancellingRecording ? '✖' : '🎤' }}</view>
+        <text class="recording-title">{{ isCancellingRecording ? '松手取消发送' : '正在录音' }}</text>
         <text class="recording-time">{{ formattedRecordingTime }}</text>
-        <text class="recording-helper">松开后自动发送语音消息</text>
+        <text class="recording-helper">{{ isCancellingRecording ? '手指下移可继续录音' : '上滑取消，松开发送语音' }}</text>
       </view>
     </view>
 
     <view class="input-wrapper">
-      <!-- 语音按钮 -->
-      <button
+      <view
         class="voice-btn"
         :class="{ 'recording': isRecording }"
-        @touchstart="startVoiceRecord"
-        @touchend="stopVoiceRecord"
-        @touchcancel="cancelVoiceRecord"
+        @touchstart.stop.prevent="startVoiceRecord"
+        @touchmove.stop.prevent="handleVoiceRecordMove"
+        @touchend.stop.prevent="stopVoiceRecord"
+        @touchcancel.stop.prevent="cancelVoiceRecord"
       >
         <text class="voice-icon">{{ isRecording ? '🎤' : '🎙️' }}</text>
-        <text class="voice-text">{{ isRecording ? '松开结束' : '按住说话' }}</text>
-      </button>
+      </view>
 
-      <!-- 输入框 -->
       <textarea
         v-model="messageContent"
         class="message-textarea"
-        :placeholder="inputMode === 'voice' ? '按住左侧按钮开始录音' : '输入消息...'"
+        placeholder="输入消息..."
         auto-height
         :maxlength="500"
         @blur="isTyping = false"
@@ -34,37 +32,23 @@
         :disabled="isRecording"
       />
 
-      <!-- 发送按钮 -->
       <button
-        class="send-btn"
-        :disabled="(!messageContent.trim() && inputMode !== 'voice') || isSending || inputMode === 'voice'"
+        v-if="!hasTextContent"
+        class="action-btn plus-btn"
+        :disabled="isRecording || isSending"
+        @tap="openMoreActions"
+      >
+        +
+      </button>
+
+      <button
+        v-else
+        class="action-btn send-btn"
+        :disabled="isSending || isRecording"
         @tap="sendMessage"
       >
-        {{ isSending ? '发送中...' : '发送' }}
+        {{ isSending ? '发送中' : '发送' }}
       </button>
-    </view>
-
-    <!-- 输入模式切换 -->
-    <view class="input-mode-switch">
-      <button
-        class="mode-btn"
-        :class="{ active: inputMode === 'text' }"
-        @tap="switchInputMode('text')"
-      >
-        文字
-      </button>
-      <button
-        class="mode-btn"
-        :class="{ active: inputMode === 'voice' }"
-        @tap="switchInputMode('voice')"
-      >
-        语音
-      </button>
-    </view>
-
-    <!-- 字数提示 -->
-    <view class="char-count">
-      {{ messageContent.length }}/500
     </view>
   </view>
 </template>
@@ -85,10 +69,13 @@ const emit = defineEmits(['send', 'typing'])
 const messageContent = ref('')
 const isSending = ref(false)
 const isTyping = ref(false)
-const inputMode = ref('text')
 const isRecording = ref(false)
+const isCancellingRecording = ref(false)
 const recordingDuration = ref(0)
 const showRecordingOverlay = ref(false)
+const recordStartY = ref(0)
+const hasTextContent = computed(() => Boolean(messageContent.value.trim()))
+const CANCEL_RECORD_DISTANCE = 120
 let recordingTimer = null
 let voiceRecorder = new VoiceRecorder()
 
@@ -114,22 +101,21 @@ const clearRecordingTimer = () => {
   }
 }
 
-const switchInputMode = (mode) => {
-  inputMode.value = mode
-  if (mode === 'voice') {
-    messageContent.value = ''
-  }
-}
-
-const startVoiceRecord = () => {
-  if (inputMode.value !== 'voice' || isRecording.value) return
+const startVoiceRecord = (event) => {
+  if (isRecording.value || isSending.value) return
 
   isRecording.value = true
+  isCancellingRecording.value = false
   showRecordingOverlay.value = true
+  recordStartY.value = Number(event?.changedTouches?.[0]?.pageY || event?.touches?.[0]?.pageY || 0)
   startRecordingTimer()
   voiceRecorder.startRecording(
     ({ duration, format, tempFilePath }) => {
       try {
+        if (isCancellingRecording.value) {
+          uni.showToast({ title: '已取消发送', icon: 'none' })
+          return
+        }
         if (!tempFilePath) {
           uni.showToast({ title: '录音失败，请重试', icon: 'none' })
           return
@@ -152,21 +138,32 @@ const startVoiceRecord = () => {
         uni.showToast({ title: '发送语音失败，请重试', icon: 'none' })
       } finally {
         isRecording.value = false
+        isCancellingRecording.value = false
         showRecordingOverlay.value = false
         clearRecordingTimer()
         recordingDuration.value = 0
+        recordStartY.value = 0
         isSending.value = false
       }
     },
     () => {
       isRecording.value = false
+      isCancellingRecording.value = false
       showRecordingOverlay.value = false
       clearRecordingTimer()
       recordingDuration.value = 0
+      recordStartY.value = 0
       isSending.value = false
       uni.showToast({ title: '录音失败，请重试', icon: 'none' })
     }
   )
+}
+
+const handleVoiceRecordMove = (event) => {
+  if (!isRecording.value) return
+  const currentY = Number(event?.changedTouches?.[0]?.pageY || event?.touches?.[0]?.pageY || 0)
+  if (!recordStartY.value || !currentY) return
+  isCancellingRecording.value = currentY <= (recordStartY.value - CANCEL_RECORD_DISTANCE)
 }
 
 const stopVoiceRecord = () => {
@@ -181,10 +178,45 @@ const stopVoiceRecord = () => {
 const cancelVoiceRecord = () => {
   if (isRecording.value) {
     isRecording.value = false
+    isCancellingRecording.value = true
     showRecordingOverlay.value = false
     clearRecordingTimer()
     voiceRecorder.stopRecording()
   }
+}
+
+const chooseAndSendImage = (sourceType) => {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: [sourceType],
+    success: (res) => {
+      const tempFilePath = res.tempFilePaths?.[0]
+      if (!tempFilePath) return
+      emit('send', {
+        type: 'image',
+        content: '',
+        attachments: {
+          tempFilePath
+        }
+      })
+    }
+  })
+}
+
+const openMoreActions = () => {
+  uni.showActionSheet({
+    itemList: ['拍照', '从相册选择'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        chooseAndSendImage('camera')
+        return
+      }
+      if (res.tapIndex === 1) {
+        chooseAndSendImage('album')
+      }
+    }
+  })
 }
 
 const sendMessage = async () => {
@@ -227,6 +259,7 @@ const sendMessage = async () => {
   align-items: center;
   justify-content: center;
   z-index: 999;
+  pointer-events: none;
 }
 
 .recording-panel {
@@ -238,6 +271,10 @@ const sendMessage = async () => {
   flex-direction: column;
   align-items: center;
   box-shadow: 0 18rpx 48rpx rgba(15, 23, 42, 0.18);
+
+  &.canceling {
+    background: rgba(255, 245, 245, 0.98);
+  }
 }
 
 .recording-mic {
@@ -251,6 +288,10 @@ const sendMessage = async () => {
   color: $text-inverse;
   font-size: 54rpx;
   box-shadow: $shadow-md;
+}
+
+.recording-panel.canceling .recording-mic {
+  background: linear-gradient(135deg, $error-color 0%, #b91c1c 100%);
 }
 
 .recording-title {
@@ -277,21 +318,21 @@ const sendMessage = async () => {
 .input-wrapper {
   display: flex;
   gap: 14rpx;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .voice-btn {
-  width: 132rpx;
+  width: 92rpx;
   height: 92rpx;
   background: linear-gradient(135deg, $card-bg-alt 0%, $primary-lighter 100%);
   border: 1rpx solid $border-light;
   border-radius: $radius-base;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   transition: all $transition-base;
   box-shadow: $shadow-xs;
+  flex-shrink: 0;
 
   &.recording {
     background: linear-gradient(135deg, $warning-color 0%, $error-color 100%);
@@ -300,17 +341,7 @@ const sendMessage = async () => {
   }
 
   .voice-icon {
-    font-size: 26rpx;
-    margin-bottom: 4rpx;
-  }
-
-  .voice-text {
-    font-size: $font-size-xs;
-    color: $text-secondary;
-  }
-
-  &.recording .voice-text {
-    color: $text-inverse;
+    font-size: 32rpx;
   }
 }
 
@@ -322,11 +353,11 @@ const sendMessage = async () => {
 
 .message-textarea {
   flex: 1;
-  min-height: 92rpx;
+  min-height: 44rpx;
   max-height: 220rpx;
-  padding: 18rpx 18rpx;
+  padding: 22rpx 22rpx;
   border: 1rpx solid $border-light;
-  border-radius: $radius-base;
+  border-radius: 28rpx;
   font-size: $font-size-base;
   line-height: 1.4;
   background: $bg-secondary;
@@ -338,16 +369,32 @@ const sendMessage = async () => {
   }
 }
 
+.action-btn {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+.plus-btn {
+  background: linear-gradient(135deg, $card-bg-alt 0%, $primary-lighter 100%);
+  color: $primary-color;
+  border: 1rpx solid $border-light;
+  font-size: 52rpx;
+  line-height: 1;
+  box-shadow: $shadow-xs;
+}
+
 .send-btn {
   background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
   color: $text-inverse;
   border: none;
-  border-radius: $radius-base;
-  padding: 0 28rpx;
-  font-size: $font-size-base;
-  font-weight: $font-weight-bold;
-  height: 92rpx;
-  line-height: 92rpx;
   box-shadow: $shadow-sm;
 
   &:disabled {
@@ -355,35 +402,5 @@ const sendMessage = async () => {
     color: $text-tertiary;
     box-shadow: none;
   }
-}
-
-.input-mode-switch {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 14rpx;
-}
-
-.mode-btn {
-  min-width: 110rpx;
-  padding: 10rpx 22rpx;
-  border: 1rpx solid $border-light;
-  border-radius: $radius-full;
-  background: $card-bg;
-  font-size: $font-size-sm;
-  color: $text-secondary;
-
-  &.active {
-    background: $primary-lighter;
-    color: $primary-color;
-    border-color: $primary-light;
-    font-weight: $font-weight-bold;
-  }
-}
-
-.char-count {
-  text-align: right;
-  font-size: $font-size-xs;
-  color: $text-tertiary;
-  margin-top: 10rpx;
 }
 </style>
