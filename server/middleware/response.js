@@ -13,8 +13,9 @@ const responseHandler = (req, res, next) => {
         });
     };
 
-    res.error = (message = '请求失败', code = 500, status = 500) => {
-        res.status(status).json({
+    res.error = (message = '请求失败', code = 500, status = null) => {
+        const finalStatus = Number.isInteger(status) ? status : code;
+        res.status(finalStatus).json({
             code,
             message,
             data: null

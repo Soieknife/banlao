@@ -74,6 +74,9 @@ function initSqliteTables(db) {
             avatar TEXT,
             emergency_contact TEXT,
             emergency_phone TEXT,
+            is_logged_in INTEGER DEFAULT 0,
+            last_login_at DATETIME,
+            last_logout_at DATETIME,
             is_vip INTEGER DEFAULT 0,
             vip_expire DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -215,6 +218,9 @@ function initSqliteTables(db) {
 
         sqliteEnsureColumn(db, 'users', 'is_vip', 'INTEGER DEFAULT 0');
         sqliteEnsureColumn(db, 'users', 'vip_expire', 'DATETIME');
+        sqliteEnsureColumn(db, 'users', 'is_logged_in', 'INTEGER DEFAULT 0');
+        sqliteEnsureColumn(db, 'users', 'last_login_at', 'DATETIME');
+        sqliteEnsureColumn(db, 'users', 'last_logout_at', 'DATETIME');
         sqliteEnsureColumn(db, 'relations', 'created_at', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         sqliteEnsureColumn(db, 'reminders', 'created_by', 'INTEGER');
         sqliteEnsureColumn(db, 'reminders', 'medication_name', 'TEXT');
@@ -389,6 +395,9 @@ async function initPostgresSchema(db) {
         avatar TEXT,
         emergency_contact TEXT,
         emergency_phone TEXT,
+        is_logged_in INTEGER DEFAULT 0,
+        last_login_at TIMESTAMPTZ,
+        last_logout_at TIMESTAMPTZ,
         is_vip INTEGER DEFAULT 0,
         vip_expire TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW()
@@ -530,6 +539,9 @@ async function initPostgresSchema(db) {
 
     await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_vip INTEGER DEFAULT 0`);
     await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS vip_expire TIMESTAMPTZ`);
+    await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_logged_in INTEGER DEFAULT 0`);
+    await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ`);
+    await db.run(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_logout_at TIMESTAMPTZ`);
     await db.run(`ALTER TABLE relations ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS created_by BIGINT`);
     await db.run(`ALTER TABLE reminders ADD COLUMN IF NOT EXISTS medication_name TEXT`);

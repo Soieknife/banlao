@@ -10,6 +10,11 @@ const BAIDU_CONFIG = {
   SECRET_KEY: 'your_secret_key' // 需要替换为实际的SECRET_KEY
 };
 
+export function hasBaiduSpeechConfig() {
+  const values = [BAIDU_CONFIG.APP_ID, BAIDU_CONFIG.API_KEY, BAIDU_CONFIG.SECRET_KEY];
+  return values.every((value) => value && !String(value).startsWith('your_'));
+}
+
 // 获取Access Token
 async function getAccessToken() {
   try {
@@ -36,6 +41,9 @@ async function getAccessToken() {
 
 // 语音识别
 export async function speechToText(audioBase64, format = 'wav') {
+  if (!hasBaiduSpeechConfig()) {
+    throw new Error('未配置百度语音识别');
+  }
   try {
     const accessToken = await getAccessToken();
 
@@ -143,35 +151,56 @@ export class VoiceRecorder {
     this.recorderManager = null;
     this.isRecording = false;
     this.onStopCallback = null;
+    this.onErrorCallback = null;
+    this.startAt = 0;
+    this.pendingStart = false;
+    this.shouldStopAfterStart = false;
   }
 
   // 开始录音
-  startRecording(onStop) {
-    if (this.isRecording) return;
+  startRecording(onStop, onError) {
+    if (this.isRecording || this.pendingStart) return;
 
     this.onStopCallback = onStop;
+    this.onErrorCallback = onError;
     this.recorderManager = uni.getRecorderManager();
+    this.pendingStart = true;
+    this.shouldStopAfterStart = false;
 
     this.recorderManager.onStart(() => {
       console.log('录音开始');
+      this.pendingStart = false;
       this.isRecording = true;
+      this.startAt = Date.now();
+      if (this.shouldStopAfterStart) {
+        this.stopRecording();
+      }
     });
 
     this.recorderManager.onStop((res) => {
       console.log('录音结束', res);
       this.isRecording = false;
+      this.pendingStart = false;
+      this.shouldStopAfterStart = false;
 
       if (this.onStopCallback) {
-        // 将录音文件转换为base64
-        const fs = uni.getFileSystemManager();
-        const base64 = fs.readFileSync(res.tempFilePath, 'base64');
-        this.onStopCallback(base64);
+        const duration = Number(res.duration || (Date.now() - this.startAt) || 0);
+        this.onStopCallback({
+          duration,
+          format: 'wav',
+          tempFilePath: res.tempFilePath
+        });
       }
     });
 
     this.recorderManager.onError((error) => {
       console.error('录音错误:', error);
       this.isRecording = false;
+      this.pendingStart = false;
+      this.shouldStopAfterStart = false;
+      if (this.onErrorCallback) {
+        this.onErrorCallback(error);
+      }
     });
 
     // 开始录音
@@ -186,6 +215,11 @@ export class VoiceRecorder {
 
   // 停止录音
   stopRecording() {
+    if (this.pendingStart) {
+      this.shouldStopAfterStart = true;
+      return;
+    }
+
     if (this.recorderManager && this.isRecording) {
       this.recorderManager.stop();
     }
@@ -193,6 +227,6 @@ export class VoiceRecorder {
 
   // 获取录音状态
   getRecordingStatus() {
-    return this.isRecording;
+    return this.isRecording || this.pendingStart;
   }
 }

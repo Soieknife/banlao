@@ -1,8 +1,19 @@
 // 前端配置文件
+const serverHost = '192.168.1.100';
+const serverPort = 3000;
+const serverOrigin = `http://${serverHost}:${serverPort}`;
+
 const config = {
+	// 服务端地址配置
+	server: {
+		host: serverHost,
+		port: serverPort,
+		origin: serverOrigin
+	},
+
 	// API配置
 	api: {
-		baseUrl: 'http://localhost:3000/api',
+		baseUrl: `${serverOrigin}/api`,
 		timeout: 10000
 	},
 	

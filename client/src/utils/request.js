@@ -6,6 +6,7 @@
  * @param {Object} options - 额外选项
  */
 import config from '../config';
+import { clearAuthStorage } from './auth';
 
 // 请求队列管理
 const requestQueue = new Set();
@@ -31,7 +32,13 @@ const hideLoading = () => {
 
 export const request = (url, method = 'GET', data = {}, options = {}) => {
     const token = uni.getStorageSync('token');
-    const { showLoading: shouldShowLoading = true, retry = 0, timeout = 30000 } = options;
+    const {
+      showLoading: shouldShowLoading = true,
+      showErrorToast = true,
+      authRedirect = true,
+      retry = 0,
+      timeout = 30000
+    } = options;
     
     if (shouldShowLoading) {
       showLoading();
@@ -55,15 +62,18 @@ export const request = (url, method = 'GET', data = {}, options = {}) => {
                 
                 if (res.statusCode >= 200 && res.statusCode < 300) {
                     resolve(res.data);
-                } else if (res.statusCode === 401) {
+                } else if (res.statusCode === 401 || res.statusCode === 403) {
                     // 未授权，跳转到登录页
-                    uni.removeStorageSync('token');
-                    uni.removeStorageSync('user');
-                    uni.reLaunch({ url: '/pages/login/login' });
+                    clearAuthStorage();
+                    if (authRedirect) {
+                      uni.reLaunch({ url: '/pages/login/login' });
+                    }
                     reject({ message: '登录已过期，请重新登录' });
                 } else {
                     const errorMessage = res.data?.message || `请求失败 (${res.statusCode})`;
-                    uni.showToast({ title: errorMessage, icon: 'none' });
+                    if (showErrorToast) {
+                      uni.showToast({ title: errorMessage, icon: 'none' });
+                    }
                     reject(res.data);
                 }
             },
@@ -84,7 +94,9 @@ export const request = (url, method = 'GET', data = {}, options = {}) => {
                 
                 // 网络错误处理
                 const errorMessage = err.errMsg || '网络请求失败，请检查网络连接';
-                uni.showToast({ title: errorMessage, icon: 'none' });
+                if (showErrorToast) {
+                  uni.showToast({ title: errorMessage, icon: 'none' });
+                }
                 reject(err);
             }
         });

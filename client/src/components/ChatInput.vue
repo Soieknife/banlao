@@ -1,22 +1,30 @@
 <template>
   <view class="chat-input-area">
+    <view v-if="showRecordingOverlay" class="recording-overlay">
+      <view class="recording-panel" :class="{ canceling: isCancellingRecording }">
+        <view class="recording-mic">{{ isCancellingRecording ? '✖' : '🎤' }}</view>
+        <text class="recording-title">{{ isCancellingRecording ? '松手取消发送' : '正在录音' }}</text>
+        <text class="recording-time">{{ formattedRecordingTime }}</text>
+        <text class="recording-helper">{{ isCancellingRecording ? '手指下移可继续录音' : '上滑取消，松开发送语音' }}</text>
+      </view>
+    </view>
+
     <view class="input-wrapper">
-      <!-- 语音按钮 -->
-      <button
+      <view
         class="voice-btn"
         :class="{ 'recording': isRecording }"
-        @touchstart="startVoiceRecord"
-        @touchend="stopVoiceRecord"
+        @touchstart.stop.prevent="startVoiceRecord"
+        @touchmove.stop.prevent="handleVoiceRecordMove"
+        @touchend.stop.prevent="stopVoiceRecord"
+        @touchcancel.stop.prevent="cancelVoiceRecord"
       >
         <text class="voice-icon">{{ isRecording ? '🎤' : '🎙️' }}</text>
-        <text class="voice-text">{{ isRecording ? '松开结束' : '按住说话' }}</text>
-      </button>
+      </view>
 
-      <!-- 输入框 -->
       <textarea
         v-model="messageContent"
         class="message-textarea"
-        :placeholder="inputMode === 'voice' ? '语音输入中...' : '输入消息...'"
+        placeholder="输入消息..."
         auto-height
         :maxlength="500"
         @blur="isTyping = false"
@@ -24,46 +32,32 @@
         :disabled="isRecording"
       />
 
-      <!-- 发送按钮 -->
       <button
-        class="send-btn"
-        :disabled="(!messageContent.trim() && inputMode !== 'voice') || isSending"
+        v-if="!hasTextContent"
+        class="action-btn plus-btn"
+        :disabled="isRecording || isSending"
+        @tap="openMoreActions"
+      >
+        +
+      </button>
+
+      <button
+        v-else
+        class="action-btn send-btn"
+        :disabled="isSending || isRecording"
         @tap="sendMessage"
       >
-        {{ isSending ? '发送中...' : '发送' }}
+        {{ isSending ? '发送中' : '发送' }}
       </button>
-    </view>
-
-    <!-- 输入模式切换 -->
-    <view class="input-mode-switch">
-      <button
-        class="mode-btn"
-        :class="{ active: inputMode === 'text' }"
-        @tap="switchInputMode('text')"
-      >
-        文字
-      </button>
-      <button
-        class="mode-btn"
-        :class="{ active: inputMode === 'voice' }"
-        @tap="switchInputMode('voice')"
-      >
-        语音
-      </button>
-    </view>
-
-    <!-- 字数提示 -->
-    <view class="char-count">
-      {{ messageContent.length }}/500
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { speechToText, VoiceRecorder } from '../utils/baidu-ai'
+import { computed, ref } from 'vue'
+import { VoiceRecorder } from '../utils/baidu-ai'
 
-const props = defineProps({
+defineProps({
   placeholder: {
     type: String,
     default: '输入消息...'
@@ -75,46 +69,154 @@ const emit = defineEmits(['send', 'typing'])
 const messageContent = ref('')
 const isSending = ref(false)
 const isTyping = ref(false)
-const inputMode = ref('text') // 'text' 或 'voice'
 const isRecording = ref(false)
+const isCancellingRecording = ref(false)
+const recordingDuration = ref(0)
+const showRecordingOverlay = ref(false)
+const recordStartY = ref(0)
+const hasTextContent = computed(() => Boolean(messageContent.value.trim()))
+const CANCEL_RECORD_DISTANCE = 120
+let recordingTimer = null
 let voiceRecorder = new VoiceRecorder()
 
-const switchInputMode = (mode) => {
-  inputMode.value = mode
-  if (mode === 'voice') {
-    messageContent.value = ''
+const formattedRecordingTime = computed(() => {
+  const seconds = Math.floor(recordingDuration.value / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const remainSeconds = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainSeconds).padStart(2, '0')}`
+})
+
+const startRecordingTimer = () => {
+  clearRecordingTimer()
+  recordingDuration.value = 0
+  recordingTimer = setInterval(() => {
+    recordingDuration.value += 200
+  }, 200)
+}
+
+const clearRecordingTimer = () => {
+  if (recordingTimer) {
+    clearInterval(recordingTimer)
+    recordingTimer = null
   }
 }
 
-const startVoiceRecord = () => {
-  if (inputMode.value !== 'voice') return
+const startVoiceRecord = (event) => {
+  if (isRecording.value || isSending.value) return
 
   isRecording.value = true
-  voiceRecorder.startRecording(async (audioBase64) => {
-    try {
-      // 语音识别
-      const recognizedText = await speechToText(audioBase64)
-      console.log('语音识别结果:', recognizedText)
-
-      // 将识别结果设置为消息内容
-      messageContent.value = recognizedText
-
-      // 自动发送
-      if (recognizedText.trim()) {
-        await sendMessage()
+  isCancellingRecording.value = false
+  showRecordingOverlay.value = true
+  recordStartY.value = Number(event?.changedTouches?.[0]?.pageY || event?.touches?.[0]?.pageY || 0)
+  startRecordingTimer()
+  voiceRecorder.startRecording(
+    ({ duration, format, tempFilePath }) => {
+      try {
+        if (isCancellingRecording.value) {
+          uni.showToast({ title: '已取消发送', icon: 'none' })
+          return
+        }
+        if (!tempFilePath) {
+          uni.showToast({ title: '录音失败，请重试', icon: 'none' })
+          return
+        }
+        if (duration < 200) {
+          uni.showToast({ title: '说话时间太短了', icon: 'none' })
+          return
+        }
+        emit('send', {
+          type: 'voice',
+          content: '',
+          attachments: {
+            duration,
+            format: format || 'wav',
+            tempFilePath
+          }
+        })
+      } catch (error) {
+        console.error('发送语音消息失败:', error)
+        uni.showToast({ title: '发送语音失败，请重试', icon: 'none' })
+      } finally {
+        isRecording.value = false
+        isCancellingRecording.value = false
+        showRecordingOverlay.value = false
+        clearRecordingTimer()
+        recordingDuration.value = 0
+        recordStartY.value = 0
+        isSending.value = false
       }
-    } catch (error) {
-      console.error('语音识别失败:', error)
-      uni.showToast({ title: '语音识别失败，请重试', icon: 'none' })
+    },
+    () => {
+      isRecording.value = false
+      isCancellingRecording.value = false
+      showRecordingOverlay.value = false
+      clearRecordingTimer()
+      recordingDuration.value = 0
+      recordStartY.value = 0
+      isSending.value = false
+      uni.showToast({ title: '录音失败，请重试', icon: 'none' })
     }
-  })
+  )
+}
+
+const handleVoiceRecordMove = (event) => {
+  if (!isRecording.value) return
+  const currentY = Number(event?.changedTouches?.[0]?.pageY || event?.touches?.[0]?.pageY || 0)
+  if (!recordStartY.value || !currentY) return
+  isCancellingRecording.value = currentY <= (recordStartY.value - CANCEL_RECORD_DISTANCE)
 }
 
 const stopVoiceRecord = () => {
   if (isRecording.value) {
     isRecording.value = false
+    showRecordingOverlay.value = false
+    clearRecordingTimer()
     voiceRecorder.stopRecording()
   }
+}
+
+const cancelVoiceRecord = () => {
+  if (isRecording.value) {
+    isRecording.value = false
+    isCancellingRecording.value = true
+    showRecordingOverlay.value = false
+    clearRecordingTimer()
+    voiceRecorder.stopRecording()
+  }
+}
+
+const chooseAndSendImage = (sourceType) => {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: [sourceType],
+    success: (res) => {
+      const tempFilePath = res.tempFilePaths?.[0]
+      if (!tempFilePath) return
+      emit('send', {
+        type: 'image',
+        content: '',
+        attachments: {
+          tempFilePath
+        }
+      })
+    }
+  })
+}
+
+const openMoreActions = () => {
+  uni.showActionSheet({
+    itemList: ['拍照', '从相册选择'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        chooseAndSendImage('camera')
+        return
+      }
+      if (res.tapIndex === 1) {
+        chooseAndSendImage('album')
+      }
+    }
+  })
 }
 
 const sendMessage = async () => {
@@ -128,9 +230,11 @@ const sendMessage = async () => {
   }
 
   isSending.value = true
-  emit('send', content)
+  emit('send', {
+    type: 'text',
+    content
+  })
 
-  // 发送后清空
   messageContent.value = ''
   isTyping.value = false
   isSending.value = false
@@ -139,48 +243,105 @@ const sendMessage = async () => {
 
 <style scoped lang="scss">
 .chat-input-area {
-  background: #fff;
-  border-top: 1px solid #eee;
-  padding: 12rpx 20rpx;
-  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  position: relative;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid $border-light;
+  padding: 16rpx 20rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -8rpx 24rpx rgba(15, 23, 42, 0.05);
+}
+
+.recording-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.recording-panel {
+  width: 360rpx;
+  padding: 40rpx 32rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 18rpx 48rpx rgba(15, 23, 42, 0.18);
+
+  &.canceling {
+    background: rgba(255, 245, 245, 0.98);
+  }
+}
+
+.recording-mic {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, $warning-color 0%, $error-color 100%);
+  color: $text-inverse;
+  font-size: 54rpx;
+  box-shadow: $shadow-md;
+}
+
+.recording-panel.canceling .recording-mic {
+  background: linear-gradient(135deg, $error-color 0%, #b91c1c 100%);
+}
+
+.recording-title {
+  margin-top: 22rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+}
+
+.recording-time {
+  margin-top: 14rpx;
+  font-size: 46rpx;
+  font-weight: $font-weight-bold;
+  color: $primary-color;
+  letter-spacing: 2rpx;
+}
+
+.recording-helper {
+  margin-top: 12rpx;
+  font-size: $font-size-sm;
+  color: $text-secondary;
 }
 
 .input-wrapper {
   display: flex;
-  gap: 12rpx;
-  align-items: flex-end;
+  gap: 14rpx;
+  align-items: center;
 }
 
 .voice-btn {
-  width: 120rpx;
-  height: 80rpx;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 8rpx;
+  width: 92rpx;
+  height: 92rpx;
+  background: linear-gradient(135deg, $card-bg-alt 0%, $primary-lighter 100%);
+  border: 1rpx solid $border-light;
+  border-radius: $radius-base;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: all $transition-base;
+  box-shadow: $shadow-xs;
+  flex-shrink: 0;
 
   &.recording {
-    background: #ff4757;
-    border-color: #ff3742;
+    background: linear-gradient(135deg, $warning-color 0%, $error-color 100%);
+    border-color: $warning-color;
     animation: pulse 1s infinite;
   }
 
   .voice-icon {
-    font-size: 24rpx;
-    margin-bottom: 4rpx;
-  }
-
-  .voice-text {
-    font-size: 20rpx;
-    color: #666;
-  }
-
-  &.recording .voice-text {
-    color: white;
+    font-size: 32rpx;
   }
 }
 
@@ -192,84 +353,54 @@ const sendMessage = async () => {
 
 .message-textarea {
   flex: 1;
-  min-height: 80rpx;
-  max-height: 200rpx;
-  padding: 12rpx 16rpx;
-  border: 1px solid #ddd;
-  border-radius: 8rpx;
-  font-size: 32rpx;
+  min-height: 44rpx;
+  max-height: 220rpx;
+  padding: 22rpx 22rpx;
+  border: 1rpx solid $border-light;
+  border-radius: 28rpx;
+  font-size: $font-size-base;
   line-height: 1.4;
-  background: #f5f5f5;
+  background: $bg-secondary;
+  color: $text-primary;
 
   &:disabled {
-    background: #e0e0e0;
-    color: #999;
+    background: $card-bg-hover;
+    color: $text-tertiary;
   }
+}
+
+.action-btn {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+.plus-btn {
+  background: linear-gradient(135deg, $card-bg-alt 0%, $primary-lighter 100%);
+  color: $primary-color;
+  border: 1rpx solid $border-light;
+  font-size: 52rpx;
+  line-height: 1;
+  box-shadow: $shadow-xs;
 }
 
 .send-btn {
-  background: #4a90e2;
-  color: white;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  color: $text-inverse;
   border: none;
-  border-radius: 8rpx;
-  padding: 12rpx 28rpx;
-  font-size: 32rpx;
-  height: 80rpx;
+  box-shadow: $shadow-sm;
 
   &:disabled {
-    background: #ccc;
-    color: #999;
+    background: $border-light;
+    color: $text-tertiary;
+    box-shadow: none;
   }
-}
-
-.input-mode-switch {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 12rpx;
-  justify-content: center;
-}
-
-.mode-btn {
-  padding: 8rpx 20rpx;
-  border: 1px solid #ddd;
-  border-radius: 6rpx;
-  background: white;
-  font-size: 28rpx;
-  color: #666;
-
-  &.active {
-    background: #4a90e2;
-    color: white;
-    border-color: #4a90e2;
-  }
-}
-
-.char-count {
-  text-align: right;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 8rpx;
-}
-</style>
-  line-height: 80rpx;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  &:disabled {
-    background: #ccc;
-    opacity: 0.6;
-  }
-
-  &:active {
-    opacity: 0.8;
-  }
-}
-
-.char-count {
-  text-align: right;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 6rpx;
-  padding-right: 12rpx;
 }
 </style>

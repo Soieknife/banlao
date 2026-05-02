@@ -20,14 +20,18 @@
 
 <script setup>
 import { ref } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
 import { speak } from '../../utils/voice';
-import config from '../../config';
+import { useChatStore } from '@/stores/chat';
+import { saveAuthSession, getHomePageByRole } from '@/utils/auth';
+import { syncSessionWithServer } from '@/utils/session';
 
 const form = ref({
 	username: '',
 	password: ''
 });
+const chatStore = useChatStore();
 
 const handleLogin = async () => {
 	if (!form.value.username || !form.value.password) {
@@ -36,11 +40,15 @@ const handleLogin = async () => {
 	}
 
 	try {
+		chatStore.clear();
 		const res = await request('/user/login', 'POST', form.value);
-		uni.setStorageSync('token', res.data.token);
-		uni.setStorageSync('user', JSON.stringify(res.data.user));
+		saveAuthSession(res.data.token, res.data.user);
 		
-		speak(`欢迎回来，${res.data.user.nickname || res.data.user.username}`);
+		if (res.data.user.role === 'elder') {
+			speak(`欢迎回来，${res.data.user.nickname || res.data.user.username}`);
+			chatStore.initSocket();
+			chatStore.startGlobalAnnouncer();
+		}
 		
 		// 检查是否需要绑定
 		if (res.data.user.role === 'child') {
@@ -108,10 +116,9 @@ const handleLogin = async () => {
 				uni.reLaunch({ url: '/pages/index/index' });
 			}
 		} else if (res.data.user.role === 'admin') {
-				// 管理员直接跳转到前端管理后台
-				uni.reLaunch({ url: '/pages/admin/index' });
+				uni.reLaunch({ url: getHomePageByRole(res.data.user.role) });
 		} else {
-			uni.reLaunch({ url: '/pages/index/index' });
+			uni.reLaunch({ url: getHomePageByRole(res.data.user.role) });
 		}
 	} catch (err) {
 		speak(err.message || '登录失败');
@@ -122,6 +129,13 @@ const handleLogin = async () => {
 const goToRegister = () => {
 	uni.navigateTo({ url: '/pages/register/register' });
 };
+
+onShow(async () => {
+	await syncSessionWithServer(chatStore, {
+		redirectToHomeWhenAuthenticated: true,
+		redirectToLoginWhenUnauthenticated: false
+	});
+});
 </script>
 
 <style lang="scss" scoped>

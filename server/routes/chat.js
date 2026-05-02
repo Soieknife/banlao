@@ -1,11 +1,107 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const sessionService = require('../services/chat/session');
 const messageService = require('../services/chat/message');
 const authMiddleware = require('../middleware/auth');
 
 // 所有聊天路由都需要认证
 router.use(authMiddleware);
+
+const voiceUploadDir = path.join(__dirname, '..', 'static', 'chat-voice');
+const imageUploadDir = path.join(__dirname, '..', 'static', 'chat-images');
+fs.mkdirSync(voiceUploadDir, { recursive: true });
+fs.mkdirSync(imageUploadDir, { recursive: true });
+
+const voiceStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, voiceUploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || '') || '.wav';
+    cb(null, `voice-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+  }
+});
+
+const voiceUpload = multer({
+  storage: voiceStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024
+  }
+});
+
+const imageStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, imageUploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || '') || '.jpg';
+    cb(null, `image-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+  }
+});
+
+const imageUpload = multer({
+  storage: imageStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024
+  }
+});
+
+router.post('/upload-voice', voiceUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ code: 400, message: '缺少语音文件', data: null });
+    }
+
+    const host = req.headers.host;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const relativePath = `/static/chat-voice/${req.file.filename}`;
+
+    res.json({
+      code: 200,
+      message: '语音上传成功',
+      data: {
+        url: `${protocol}://${host}${relativePath}`,
+        path: relativePath,
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      }
+    });
+  } catch (error) {
+    console.error('上传语音失败:', error);
+    res.status(500).json({ code: 500, message: '上传语音失败', data: null });
+  }
+});
+
+router.post('/upload-image', imageUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ code: 400, message: '缺少图片文件', data: null });
+    }
+
+    const host = req.headers.host;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const relativePath = `/static/chat-images/${req.file.filename}`;
+
+    res.json({
+      code: 200,
+      message: '图片上传成功',
+      data: {
+        url: `${protocol}://${host}${relativePath}`,
+        path: relativePath,
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      }
+    });
+  } catch (error) {
+    console.error('上传图片失败:', error);
+    res.status(500).json({ code: 500, message: '上传图片失败', data: null });
+  }
+});
 
 // POST /api/chat/send - 发送消息
 router.post('/send', async (req, res) => {

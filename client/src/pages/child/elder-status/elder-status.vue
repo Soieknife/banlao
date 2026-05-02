@@ -52,6 +52,13 @@
 					</view>
 					<view class="menu-right">›</view>
 				</view>
+				<view class="menu-item" @click="goChat">
+					<view class="menu-left">
+						<view class="menu-title">家人聊天</view>
+						<view class="menu-desc">给这位长辈发送消息</view>
+					</view>
+					<view class="menu-right">›</view>
+				</view>
 				<view class="menu-item danger" @click="unbind">
 					<view class="menu-left">
 						<view class="menu-title">解绑该长辈</view>
@@ -123,6 +130,10 @@ const goVipPurchase = () => {
 
 const goLogs = () => {
 	uni.navigateTo({ url: `/pages/child/activity-logs/activity-logs?id=${elderId.value}&name=${encodeURIComponent(elderName.value)}` });
+};
+
+const goChat = () => {
+	uni.navigateTo({ url: `/pages/chat/chat-list?targetUserId=${elderId.value}&targetName=${encodeURIComponent(elderName.value)}` });
 };
 
 const unbind = () => {
