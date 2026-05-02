@@ -25,7 +25,6 @@
         v-model="messageContent"
         class="message-textarea"
         placeholder="输入消息..."
-        auto-height
         :maxlength="500"
         @blur="isTyping = false"
         @focus="isTyping = true"
@@ -353,8 +352,7 @@ const sendMessage = async () => {
 
 .message-textarea {
   flex: 1;
-  min-height: 44rpx;
-  max-height: 220rpx;
+  height: 92rpx;
   padding: 22rpx 22rpx;
   border: 1rpx solid $border-light;
   border-radius: 28rpx;
