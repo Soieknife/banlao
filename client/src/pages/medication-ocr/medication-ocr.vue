@@ -1,114 +1,121 @@
 <template>
-	<view class="page-container" :class="{ 'high-contrast': highContrast, 'large-font': largeFont }">
+	<view class="page-container" :class="{ 'large-font': largeFont, 'high-contrast': highContrast }">
 		<AppSidebar active-path="/pages/medication-ocr/medication-ocr" />
 
-		<view class="card-elder header-card">
-			<view class="header-top">
-				<view class="text-title">识药助手</view>
-				<view class="elder-tools">
-					<button class="tool-btn" @click="toggleFontSize" :class="{ active: largeFont }">
-						<text class="tool-icon">🔍</text>
-						<text>大字体</text>
-					</button>
-					<button class="tool-btn" @click="toggleContrast" :class="{ active: highContrast }">
-						<text class="tool-icon">⚡</text>
-						<text>高对比</text>
-					</button>
-					<button class="tool-btn" @click="readInstructions">
-						<text class="tool-icon">🔊</text>
-						<text>语音</text>
-					</button>
+		<view class="card-elder hero-card">
+			<view class="hero-head">
+				<view>
+					<view class="text-title">识药助手</view>
+					<view class="text-helper">拍一张药品说明书，系统会自动识别并整理重点信息。</view>
+				</view>
+				<view class="toolbar">
+					<button class="tool-btn" :class="{ active: largeFont }" @click="toggleFontSize">大字</button>
+					<button class="tool-btn" :class="{ active: highContrast }" @click="toggleContrast">高对比</button>
+					<button class="tool-btn" @click="readInstructions">语音说明</button>
 				</view>
 			</view>
-			<view class="text-helper">拍照后自动提取药名、用法用量、风险提醒，并把重点用更好懂的话讲给您。</view>
 			<view class="tips">
-				<text class="tip-item">请拍摄药品说明书正面，确保文字清晰</text>
-				<text class="tip-item">尽量保持画面平整，避免反光和阴影</text>
-				<text class="tip-item">可从相册选择已保存的说明书照片</text>
+				<text class="tip-item">1. 拍摄说明书正面，尽量完整包含药名、用法用量、注意事项。</text>
+				<text class="tip-item">2. 保持光线充足，避免反光、阴影和严重倾斜。</text>
+				<text class="tip-item">3. 如果识别不完整，可以重新拍一张更清晰的图片。</text>
 			</view>
 		</view>
 
 		<view class="card-elder">
-			<view class="btn-group">
-				<button class="btn-elder" @click="chooseImage('camera')">📷 拍照</button>
-				<button class="btn-elder ghost-btn" @click="chooseImage('album')">📁 从相册选择</button>
-				<button class="btn-elder ghost-btn" @click="scanBarcode">📱 扫码</button>
+			<view class="action-grid">
+				<button class="btn-elder" @click="chooseImage('camera')">拍照</button>
+				<button class="btn-elder ghost-btn" @click="chooseImage('album')">相册选择</button>
 			</view>
-			<view v-if="imagePath" class="preview">
-				<image :src="imagePath" class="img" mode="widthFix"></image>
-				<view class="preview-actions">
-					<button class="btn-elder small-btn" @click="retryImage">重新选择</button>
+
+			<view v-if="imagePath" class="preview-box">
+				<image class="preview-image" :src="imagePath" mode="widthFix" @click="previewSelectedImage" />
+				<view class="preview-footer">
+					<text class="text-helper">已选择图片，确认无误后开始识别。</text>
+					<button class="btn-elder small-btn ghost-btn" @click="resetImage">重新选择</button>
 				</view>
 			</view>
-			<button v-if="imagePath" class="btn-elder" :disabled="loading" @click="analyze">
-				<text v-if="loading">识别中，请稍候...</text>
-				<text v-else>开始识别</text>
+
+			<button v-if="imagePath" class="btn-elder analyze-btn" :disabled="loading" @click="analyze">
+				{{ loading ? '识别中，请稍候...' : '开始识别' }}
 			</button>
-			<view v-if="result?.extracted?.completion_score" class="completion-score">
-				<view class="score-bar">
-					<view class="score-fill" :style="{ width: result.extracted.completion_score + '%' }"></view>
-				</view>
-				<text class="score-text">识别完整度：{{ result.extracted.completion_score }}%</text>
+
+			<view v-if="loading" class="loading-note text-helper">
+				正在执行图片上传、OCR 识别和药品信息整理，请稍候。
 			</view>
 		</view>
 
-		<view v-if="result" class="card-elder result-card">
-		<view class="text-title">给您一句话说明</view>
-		<view class="text-content">{{ result.elder_summary || '暂无' }}</view>
-		<view class="result-actions">
-			<button class="btn-elder small-btn" @click="shareResult">分享药品信息</button>
-			<button class="btn-elder small-btn ghost-btn" @click="speakSummary">语音朗读</button>
+		<view v-if="result" class="card-elder summary-card">
+			<view class="row-head">
+				<view class="text-title">给老人看的简化说明</view>
+				<view class="tag-group">
+					<text class="meta-tag">{{ parseStatusText }}</text>
+					<text class="meta-tag subtle">{{ result.ocr_provider || 'OCR' }}</text>
+				</view>
+			</view>
+			<view class="summary-text">{{ result.elder_summary || '暂无简化说明' }}</view>
+			<view v-if="showFallbackHint" class="fallback-hint">
+				<text class="text-helper">本次结果包含规则兜底整理，建议重点核对药名、用法用量和注意事项。</text>
+			</view>
+			<view class="result-actions">
+				<button class="btn-elder small-btn" @click="speakSummary">语音朗读</button>
+				<button class="btn-elder small-btn ghost-btn" @click="shareResult">复制结果</button>
+				<button
+					v-if="result.extracted && result.extracted.drug_name"
+					class="btn-elder small-btn ghost-btn"
+					@click="setReminder"
+				>
+					设置提醒
+				</button>
+			</view>
 		</view>
-		<view class="result-meta">
-			<text class="meta-tag">{{ result.parse_status === 'success' ? '智能整理完成' : '规则兜底整理' }}</text>
-			<text class="meta-tag subtle">来源：{{ result.ocr_provider || 'OCR' }}</text>
-		</view>
-	</view>
 
 		<view v-if="result && result.extracted" class="card-elder">
-			<view class="text-title">关键信息</view>
-			<view class="kv"><text class="k">药品名称</text><text class="v">{{ result.extracted.drug_name || '—' }}</text></view>
-			<view class="kv"><text class="k">功能主治</text><text class="v">{{ result.extracted.indications || '—' }}</text></view>
-			<view class="kv"><text class="k">用法用量</text><text class="v">{{ result.extracted.dosage || '—' }}</text></view>
-			<view class="kv"><text class="k">注意事项</text><text class="v">{{ result.extracted.warnings || '—' }}</text></view>
-			<view class="kv"><text class="k">禁忌</text><text class="v">{{ result.extracted.contraindications || '—' }}</text></view>
-			<view class="kv"><text class="k">不良反应</text><text class="v">{{ result.extracted.adverse_reactions || '—' }}</text></view>
-			<view class="kv"><text class="k">成分</text><text class="v">{{ result.extracted.ingredients || '—' }}</text></view>
-			<view class="kv"><text class="k">贮藏</text><text class="v">{{ result.extracted.storage || '—' }}</text></view>
-			<view class="kv"><text class="k">规格</text><text class="v">{{ result.extracted.specification || '—' }}</text></view>
-			<view class="kv"><text class="k">包装</text><text class="v">{{ result.extracted.package || '—' }}</text></view>
-			<view class="kv"><text class="k">有效期</text><text class="v">{{ result.extracted.validity_period || '—' }}</text></view>
+			<view class="row-head">
+				<view class="text-title">关键信息</view>
+				<text v-if="completionScoreText" class="score-text">{{ completionScoreText }}</text>
+			</view>
+
+			<view v-if="hasCompletionScore" class="score-bar">
+				<view class="score-fill" :style="{ width: `${result.extracted.completion_score}%` }"></view>
+			</view>
+
+			<view v-for="item in infoFields" :key="item.key" class="info-row">
+				<text class="info-key">{{ item.label }}</text>
+				<text class="info-value">{{ result.extracted[item.key] || '未识别到' }}</text>
+			</view>
 		</view>
 
-		<view v-if="result?.extracted?.safety_alerts?.length" class="card-elder alert-card">
+		<view v-if="safetyAlerts.length" class="card-elder alert-card">
 			<view class="text-title">重点风险提醒</view>
-			<view v-for="(item, index) in result.extracted.safety_alerts" :key="index" class="list-row">
+			<view v-for="(item, index) in safetyAlerts" :key="`alert-${index}`" class="list-row">
 				<text class="dot warning-dot"></text>
 				<text class="list-text">{{ item }}</text>
 			</view>
 		</view>
 
-		<view v-if="result?.extracted?.usage_tips?.length" class="card-elder">
-		<view class="text-title">服用与保存提示</view>
-		<view v-for="(item, index) in result.extracted.usage_tips" :key="index" class="list-row">
-			<text class="dot"></text>
-			<text class="list-text">{{ item }}</text>
-		</view>
-		<button v-if="result?.extracted?.dosage" class="btn-elder small-btn" @click="setReminder">设置用药提醒</button>
-	</view>
-
-		<view v-if="result?.extracted?.missing_fields?.length" class="card-elder missing-card">
-			<view class="text-title">识别不足的部分</view>
-			<view class="text-helper">这几项在图片里没有可靠识别出来，建议重新拍一张更完整、更清晰的说明书正面：</view>
-			<view class="chips">
-				<text v-for="item in result.extracted.missing_fields" :key="item" class="chip">{{ fieldNameMap[item] || item }}</text>
+		<view v-if="usageTips.length" class="card-elder">
+			<view class="text-title">服用与保存提示</view>
+			<view v-for="(item, index) in usageTips" :key="`tip-${index}`" class="list-row">
+				<text class="dot"></text>
+				<text class="list-text">{{ item }}</text>
 			</view>
 		</view>
 
-		<view v-if="result?.raw_text" class="card-elder">
+		<view v-if="missingFields.length" class="card-elder missing-card">
+			<view class="text-title">未完整识别的字段</view>
+			<view class="text-helper">这些内容没有稳定识别出来，建议重新拍摄更清晰、范围更完整的说明书。</view>
+			<view class="chip-list">
+				<text v-for="item in missingFields" :key="item" class="chip">{{ fieldNameMap[item] || item }}</text>
+			</view>
+		</view>
+
+		<view v-if="result && result.raw_text" class="card-elder">
 			<view class="row-head">
-				<view class="text-title">原始识别文字</view>
+				<view class="text-title">原始 OCR 文本</view>
 				<text class="toggle-link" @click="showRawText = !showRawText">{{ showRawText ? '收起' : '展开' }}</text>
+			</view>
+			<view v-if="result.parse_error && showFallbackHint" class="text-helper parse-error">
+				结构化提取提示：{{ result.parse_error }}
 			</view>
 			<view v-if="showRawText" class="raw-text">{{ result.raw_text }}</view>
 		</view>
@@ -116,18 +123,19 @@
 		<view class="card-elder">
 			<view class="row-head">
 				<view class="text-title">最近识别记录</view>
-				<text class="toggle-link" @click="fetchRecords">刷新</text>
+				<button class="mini-link" :disabled="recordsLoading" @click="fetchRecords">刷新</button>
 			</view>
+
 			<view v-if="recordsLoading" class="text-helper">加载中...</view>
-			<view v-else-if="records.length === 0" class="text-helper">还没有识别记录</view>
-			<view v-else>
+			<view v-else-if="records.length === 0" class="text-helper">还没有识别记录。</view>
+			<view v-else class="record-list">
 				<view v-for="record in records" :key="record.id" class="record-item" @click="openRecord(record.id)">
 					<view class="record-main">
 						<view class="record-title">{{ record.elder_summary || '识别记录' }}</view>
 						<view class="record-time">{{ formatTime(record.created_at) }}</view>
 					</view>
-					<view class="record-tags">
-						<text class="meta-tag">{{ record.parse_status === 'success' ? '智能整理' : '兜底整理' }}</text>
+					<view class="tag-group">
+						<text class="meta-tag">{{ record.parse_status === 'success' ? '智能整理' : '规则兜底' }}</text>
 						<text class="meta-tag subtle">{{ record.parse_method || 'rule' }}</text>
 					</view>
 				</view>
@@ -137,9 +145,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { request } from '../../utils/request';
-import { speak } from '../../utils/voice';
+import { speak, stop } from '../../utils/voice';
 import config from '../../config';
 import AppSidebar from '../../components/AppSidebar.vue';
 
@@ -155,7 +163,7 @@ const highContrast = ref(false);
 const fieldNameMap = {
 	drug_name: '药品名称',
 	ingredients: '成分',
-	indications: '功能主治',
+	indications: '适应症',
 	dosage: '用法用量',
 	warnings: '注意事项',
 	contraindications: '禁忌',
@@ -166,160 +174,142 @@ const fieldNameMap = {
 	validity_period: '有效期'
 };
 
-const chooseImage = (sourceType = 'both') => {
+const infoFields = [
+	{ key: 'drug_name', label: '药品名称' },
+	{ key: 'ingredients', label: '成分' },
+	{ key: 'indications', label: '适应症' },
+	{ key: 'dosage', label: '用法用量' },
+	{ key: 'warnings', label: '注意事项' },
+	{ key: 'contraindications', label: '禁忌' },
+	{ key: 'adverse_reactions', label: '不良反应' },
+	{ key: 'storage', label: '贮藏' },
+	{ key: 'specification', label: '规格' },
+	{ key: 'package', label: '包装' },
+	{ key: 'validity_period', label: '有效期' }
+];
+
+const parseStatusText = computed(() => {
+	if (!result.value) return '';
+	return result.value.parse_status === 'success' ? '智能整理完成' : '规则兜底整理';
+});
+
+const hasCompletionScore = computed(() => Number.isFinite(Number(result.value?.extracted?.completion_score)));
+const showFallbackHint = computed(() => result.value?.parse_status && result.value.parse_status !== 'success');
+
+const completionScoreText = computed(() => {
+	if (!hasCompletionScore.value) return '';
+	return `完整度 ${Number(result.value.extracted.completion_score)}%`;
+});
+
+const safetyAlerts = computed(() => {
+	const list = result.value?.extracted?.safety_alerts;
+	return Array.isArray(list) ? list : [];
+});
+
+const usageTips = computed(() => {
+	const list = result.value?.extracted?.usage_tips;
+	return Array.isArray(list) ? list : [];
+});
+
+const missingFields = computed(() => {
+	const list = result.value?.extracted?.missing_fields;
+	return Array.isArray(list) ? list : [];
+});
+
+const chooseImage = (sourceType) => {
 	uni.chooseImage({
 		count: 1,
 		sizeType: ['compressed'],
-		sourceType: sourceType === 'camera' ? ['camera'] : sourceType === 'album' ? ['album'] : ['camera', 'album'],
+		sourceType: sourceType === 'camera' ? ['camera'] : ['album'],
 		success: (res) => {
-			imagePath.value = res.tempFilePaths[0];
+			imagePath.value = res.tempFilePaths[0] || '';
 			result.value = null;
 			showRawText.value = false;
-			speak('已选择图片，点击开始识别即可。');
-		}
-	});
-};
-
-const retryImage = () => {
-	imagePath.value = '';
-	result.value = null;
-	showRawText.value = false;
-};
-
-const setReminder = () => {
-	if (!result.value?.extracted?.drug_name) {
-		uni.showToast({ title: '药品名称识别不完整', icon: 'none' });
-		return;
-	}
-	
-	uni.navigateTo({
-		url: `/pages/reminders/reminders?prefill=medicine&drugName=${encodeURIComponent(result.value.extracted.drug_name)}&dosage=${encodeURIComponent(result.value.extracted.dosage || '')}`
-	});
-};
-
-const shareResult = () => {
-	if (!result.value) {
-		uni.showToast({ title: '暂无药品信息', icon: 'none' });
-		return;
-	}
-	
-	const shareContent = `药品名称：${result.value.extracted?.drug_name || '未知'}\n` +
-		`功能主治：${result.value.extracted?.indications || '未知'}\n` +
-		`用法用量：${result.value.extracted?.dosage || '未知'}\n` +
-		`注意事项：${result.value.extracted?.warnings || '未知'}\n` +
-		`一句话说明：${result.value.elder_summary || '暂无'}`;
-	
-	uni.showActionSheet({
-		itemList: ['分享到微信', '分享到QQ', '复制文本'],
-		success: (res) => {
-			switch (res.tapIndex) {
-				case 0:
-				case 1:
-					uni.showToast({ title: '分享功能开发中', icon: 'none' });
-					break;
-				case 2:
-					uni.setClipboardData({
-						data: shareContent,
-						success: () => {
-							uni.showToast({ title: '已复制到剪贴板', icon: 'success' });
-						}
-					});
-					break;
+			if (imagePath.value) {
+				speak('已选择图片，可以开始识别。');
 			}
 		}
 	});
 };
 
-const speakSummary = () => {
-	if (result.value?.elder_summary) {
-		speak(result.value.elder_summary);
-	} else {
-		speak('暂无药品信息');
-	}
+const previewSelectedImage = () => {
+	if (!imagePath.value) return;
+	uni.previewImage({
+		urls: [imagePath.value],
+		current: imagePath.value
+	});
+};
+
+const resetImage = () => {
+	imagePath.value = '';
+	result.value = null;
+	showRawText.value = false;
 };
 
 const toggleFontSize = () => {
 	largeFont.value = !largeFont.value;
-	speak(largeFont.value ? '已切换到大字体模式' : '已切换到标准字体模式');
+	speak(largeFont.value ? '已切换为大字模式。' : '已恢复标准字号。');
 };
 
 const toggleContrast = () => {
 	highContrast.value = !highContrast.value;
-	speak(highContrast.value ? '已切换到高对比度模式' : '已切换到标准模式');
+	speak(highContrast.value ? '已切换为高对比模式。' : '已恢复标准对比模式。');
 };
 
 const readInstructions = () => {
-	speak('识药助手使用说明：第一步，点击拍照或从相册选择按钮，拍摄药品说明书。第二步，点击开始识别按钮。第三步，查看识别结果，重点关注用法用量和注意事项。如果需要，可以点击语音朗读按钮听取药品信息。');
+	speak('先拍摄或选择药品说明书图片，再点击开始识别。识别完成后，系统会整理药名、适应症、用法用量和注意事项。');
 };
 
-const readResult = () => {
-	if (!result.value) {
-		speak('暂无药品信息');
+const speakSummary = () => {
+	const summary = result.value?.elder_summary;
+	if (!summary) {
+		speak('当前还没有可朗读的识别结果。');
 		return;
 	}
-	
-	let content = '';
-	if (result.value.elder_summary) {
-		content += result.value.elder_summary + '。';
-	}
-	if (result.value.extracted?.dosage) {
-		content += '用法用量：' + result.value.extracted.dosage + '。';
-	}
-	if (result.value.extracted?.warnings) {
-		content += '注意事项：' + result.value.extracted.warnings + '。';
-	}
-	if (result.value.extracted?.contraindications) {
-		content += '禁忌：' + result.value.extracted.contraindications + '。';
-	}
-	
-	if (content) {
-		speak(content);
-	} else {
-		speak('药品信息不完整');
-	}
+	speak(summary, { immediate: true });
 };
 
-const scanBarcode = () => {
-	uni.scanCode({
-		onlyFromCamera: true,
-		scanType: ['barCode'],
-		success: (res) => {
-			const barcode = res.result;
-			speak('扫码成功，正在查询药品信息');
-			// 模拟药品信息查询
-			queryDrugByBarcode(barcode);
-		},
-		fail: (err) => {
-			speak('扫码失败，请重试');
-			uni.showToast({ title: '扫码失败，请重试', icon: 'none' });
+const shareResult = () => {
+	if (!result.value?.extracted) {
+		uni.showToast({ title: '暂无可复制内容', icon: 'none' });
+		return;
+	}
+
+	const shareContent = [
+		`药品名称：${result.value.extracted.drug_name || '未识别到'}`,
+		`适应症：${result.value.extracted.indications || '未识别到'}`,
+		`用法用量：${result.value.extracted.dosage || '未识别到'}`,
+		`注意事项：${result.value.extracted.warnings || '未识别到'}`,
+		`简化说明：${result.value.elder_summary || '暂无'}`
+	].join('\n');
+
+	uni.setClipboardData({
+		data: shareContent,
+		success: () => {
+			uni.showToast({ title: '已复制到剪贴板', icon: 'success' });
 		}
 	});
 };
 
-const queryDrugByBarcode = async (barcode) => {
-	// 调用后端API查询药品信息
-	uni.showLoading({ title: '查询中...' });
-	
-	try {
-		const res = await request(`/medication/barcode/${barcode}`);
-		result.value = res.data;
-		
-		speak(`查询到药品信息：${res.data.extracted.drug_name}，规格${res.data.extracted.specification}，主要用于${res.data.extracted.indications}`);
-		uni.showToast({ title: '查询成功', icon: 'success' });
-	} catch (err) {
-		speak('查询失败，请重试');
-		uni.showToast({ title: err.message || '查询失败，请重试', icon: 'none' });
-	} finally {
-		uni.hideLoading();
+const setReminder = () => {
+	const drugName = result.value?.extracted?.drug_name;
+	if (!drugName) {
+		uni.showToast({ title: '药品名称未识别完整', icon: 'none' });
+		return;
 	}
+
+	const dosage = result.value?.extracted?.dosage || '';
+	uni.navigateTo({
+		url: `/pages/reminders/reminders?prefill=medicine&drugName=${encodeURIComponent(drugName)}&dosage=${encodeURIComponent(dosage)}`
+	});
 };
 
 const fetchRecords = async () => {
 	recordsLoading.value = true;
 	try {
-		const res = await request('/medication/records');
-		records.value = Array.isArray(res.data) ? res.data : [];
-	} catch (err) {
+		const response = await request('/medication/records', 'GET', {}, { showLoading: false, showErrorToast: false });
+		records.value = Array.isArray(response.data) ? response.data : [];
+	} catch (error) {
 		records.value = [];
 	} finally {
 		recordsLoading.value = false;
@@ -327,52 +317,56 @@ const fetchRecords = async () => {
 };
 
 const openRecord = async (id) => {
+	loading.value = true;
 	try {
-		loading.value = true;
-		const res = await request(`/medication/record/${id}`);
-		result.value = res.data;
+		const response = await request(`/medication/record/${id}`, 'GET', {}, { showLoading: false });
+		result.value = response.data || null;
 		showRawText.value = false;
 		uni.pageScrollTo({ scrollTop: 0, duration: 200 });
 		if (result.value?.elder_summary) {
-			speak(result.value.elder_summary);
+			speak(result.value.elder_summary, { immediate: true });
 		}
-	} catch (err) {
-		uni.showToast({ title: err.message || '加载记录失败', icon: 'none' });
+	} catch (error) {
+		uni.showToast({ title: error.message || '加载记录失败', icon: 'none' });
 	} finally {
 		loading.value = false;
 	}
 };
 
 const analyze = () => {
-	if (!imagePath.value) return;
-	loading.value = true;
+	if (!imagePath.value || loading.value) return;
+
 	const token = uni.getStorageSync('token');
+	loading.value = true;
+	stop();
+
 	uni.uploadFile({
 		url: `${config.api.baseUrl}/medication/analyze_upload`,
 		filePath: imagePath.value,
 		name: 'image',
 		header: {
-			'Authorization': token ? `Bearer ${token}` : ''
+			Authorization: token ? `Bearer ${token}` : ''
 		},
-		success: (uploadRes) => {
+		success: (uploadResponse) => {
 			try {
-				const data = JSON.parse(uploadRes.data);
-				if (data.code !== 200) {
-					uni.showToast({ title: data.message || '识别失败', icon: 'none' });
+				const body = JSON.parse(uploadResponse.data || '{}');
+				if (uploadResponse.statusCode !== 200 || body.code !== 200) {
+					uni.showToast({ title: body.message || '识别失败', icon: 'none' });
 					return;
 				}
-				result.value = data.data;
+
+				result.value = body.data || null;
 				showRawText.value = false;
-				if (result.value && result.value.elder_summary) {
-					speak(result.value.elder_summary);
+				if (result.value?.elder_summary) {
+					speak(result.value.elder_summary, { immediate: true });
 				}
 				fetchRecords();
-			} catch (e) {
-				uni.showToast({ title: '解析失败', icon: 'none' });
+			} catch (error) {
+				uni.showToast({ title: '识别结果解析失败', icon: 'none' });
 			}
 		},
-		fail: (err) => {
-			uni.showToast({ title: err.errMsg || '上传失败', icon: 'none' });
+		fail: (error) => {
+			uni.showToast({ title: error.errMsg || '图片上传失败', icon: 'none' });
 		},
 		complete: () => {
 			loading.value = false;
@@ -380,10 +374,16 @@ const analyze = () => {
 	});
 };
 
-const formatTime = (timeStr) => {
-	if (!timeStr) return '';
-	const date = new Date(timeStr);
-	return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+const formatTime = (time) => {
+	if (!time) return '';
+	const date = new Date(time);
+	if (Number.isNaN(date.getTime())) return String(time);
+
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	const hour = String(date.getHours()).padStart(2, '0');
+	const minute = String(date.getMinutes()).padStart(2, '0');
+	return `${month}-${day} ${hour}:${minute}`;
 };
 
 onMounted(() => {
@@ -392,391 +392,235 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.header-card {
+.hero-card {
 	border-left: 10rpx solid $main-color;
 }
 
-.tips {
-	margin-top: 16rpx;
-	padding: 16rpx;
-	background-color: #F8FAFC;
-	border-radius: 12rpx;
-	border-left: 4rpx solid $main-color;
+.hero-head,
+.row-head,
+.preview-footer,
+.result-actions,
+.record-item,
+.record-main {
+	display: flex;
+}
+
+.hero-head,
+.row-head,
+.preview-footer,
+.record-item {
+	justify-content: space-between;
+}
+
+.hero-head,
+.row-head,
+.preview-footer,
+.record-item,
+.toolbar,
+.tag-group {
+	align-items: center;
+}
+
+.toolbar,
+.tag-group,
+.action-grid,
+.tips,
+.record-list,
+.chip-list {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.toolbar,
+.tag-group {
+	gap: 12rpx;
+}
+
+.tips,
+.record-list {
+	flex-direction: column;
+}
+
+.tips,
+.record-list,
+.chip-list {
+	gap: 12rpx;
+}
+
+.tool-btn {
+	min-width: 110rpx;
+	height: 72rpx;
+	line-height: 72rpx;
+	border-radius: 16rpx;
+	background-color: #f5f7fa;
+	color: #4b5563;
+	font-size: 24rpx;
+}
+
+.tool-btn.active {
+	background-color: #ebf3ff;
+	color: $main-color;
 }
 
 .tip-item {
 	display: block;
-	margin-top: 8rpx;
 	font-size: 26rpx;
-	color: #4B5563;
-	line-height: 1.5;
+	color: #4b5563;
+	line-height: 1.6;
 }
 
-.tip-item:first-child {
-	margin-top: 0;
-}
-
-.btn-group {
-	display: flex;
+.action-grid {
 	gap: 16rpx;
-	margin-bottom: 20rpx;
 }
 
-.btn-group button {
+.action-grid button {
 	flex: 1;
 }
 
-.preview {
-	margin-top: 20rpx;
-	border-radius: 20rpx;
-	overflow: hidden;
-	border: 2rpx solid #EBF3FF;
-	position: relative;
+.ghost-btn {
+	background-color: #f5f7fa;
+	color: #374151;
 }
 
-.img {
+.preview-box {
+	margin-top: 24rpx;
+	border-radius: 24rpx;
+	overflow: hidden;
+	border: 2rpx solid #dbeafe;
+	background-color: #fff;
+}
+
+.preview-image {
 	width: 100%;
 }
 
-.preview-actions {
-	position: absolute;
-	bottom: 20rpx;
-	right: 20rpx;
+.preview-footer {
+	padding: 20rpx 24rpx;
+	gap: 16rpx;
 }
 
 .small-btn {
 	height: 72rpx;
 	line-height: 72rpx;
-	font-size: 26rpx;
 	padding: 0 24rpx;
-}
-
-.ghost-btn {
-	background-color: #F5F7FA;
-	color: #333;
-}
-
-.completion-score {
-	margin-top: 20rpx;
-}
-
-.score-bar {
-	height: 12rpx;
-	background-color: #E5E7EB;
-	border-radius: 6rpx;
-	overflow: hidden;
-	margin-bottom: 8rpx;
-}
-
-.score-fill {
-	height: 100%;
-	background: linear-gradient(90deg, #4A90E2, #667eea);
-	border-radius: 6rpx;
-	transition: width 0.3s ease;
-}
-
-.score-text {
 	font-size: 26rpx;
-	color: #4B5563;
-	text-align: center;
+}
+
+.analyze-btn {
+	margin-top: 24rpx;
+}
+
+.loading-note {
+	margin-top: 16rpx;
+}
+
+.summary-card {
+	background: linear-gradient(135deg, #ebf3ff 0%, #f8fbff 100%);
+}
+
+.summary-text {
+	margin-top: 18rpx;
+	font-size: 32rpx;
+	line-height: 1.8;
+	color: $main-color;
+}
+
+.fallback-hint {
+	margin-top: 16rpx;
+	padding: 18rpx 20rpx;
+	border-radius: 16rpx;
+	background-color: rgba(255, 255, 255, 0.7);
 }
 
 .result-actions {
-	display: flex;
-	gap: 12rpx;
-	margin: 20rpx 0;
+	margin-top: 24rpx;
+	gap: 16rpx;
+	flex-wrap: wrap;
 }
 
 .result-actions button {
 	flex: 1;
-}
-
-/* 适老功能样式 */
-.header-top {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 16rpx;
-}
-
-.elder-tools {
-	display: flex;
-	gap: 8rpx;
-}
-
-.tool-btn {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 12rpx 16rpx;
-	background-color: #F5F7FA;
-	border: 1rpx solid #E5E7EB;
-	border-radius: 12rpx;
-	font-size: 20rpx;
-	color: #4B5563;
-	min-width: 90rpx;
-}
-
-.tool-btn.active {
-	background-color: #EBF3FF;
-	border-color: #4A90E2;
-	color: #4A90E2;
-}
-
-.tool-icon {
-	font-size: 28rpx;
-	margin-bottom: 4rpx;
-}
-
-/* 大字体模式 */
-.large-font {
-	font-size: 120%;
-}
-
-.large-font .text-title {
-	font-size: 36rpx;
-}
-
-.large-font .text-content {
-	font-size: 34rpx;
-}
-
-.large-font .text-helper {
-	font-size: 30rpx;
-}
-
-.large-font .kv .k,
-.large-font .kv .v {
-	font-size: 32rpx;
-}
-
-.large-font .list-text {
-	font-size: 32rpx;
-}
-
-/* 高对比度模式 */
-.high-contrast {
-	background-color: #000;
-	color: #fff;
-}
-
-.high-contrast .card-elder {
-	background-color: #1a1a1a;
-	border-color: #333;
-}
-
-.high-contrast .header-card {
-	background-color: #2a2a2a;
-	border-color: #4A90E2;
-}
-
-.high-contrast .result-card {
-	background-color: #1a3a5a;
-}
-
-.high-contrast .alert-card {
-	background-color: #5a1a1a;
-	border-color: #ff6b6b;
-}
-
-.high-contrast .missing-card {
-	background-color: #5a4a1a;
-	border-color: #ffd93d;
-}
-
-.high-contrast .text-title,
-.high-contrast .text-content {
-	color: #fff;
-}
-
-.high-contrast .text-helper {
-	color: #ccc;
-}
-
-.high-contrast .kv .k {
-	color: #aaa;
-}
-
-.high-contrast .kv .v {
-	color: #fff;
-}
-
-.high-contrast .list-text {
-	color: #fff;
-}
-
-.high-contrast .meta-tag {
-	background-color: #333;
-	color: #4A90E2;
-}
-
-.high-contrast .meta-tag.subtle {
-	background-color: rgba(255, 255, 255, 0.1);
-	color: #aaa;
-}
-
-.high-contrast .chip {
-	background-color: #5a4a1a;
-	color: #ffd93d;
-}
-
-.high-contrast .dot {
-	background-color: #4A90E2;
-}
-
-.high-contrast .warning-dot {
-	background-color: #ff6b6b;
-}
-
-.high-contrast .btn-elder {
-	background-color: #4A90E2;
-	color: #fff;
-}
-
-.high-contrast .btn-elder.ghost-btn {
-	background-color: #333;
-	color: #fff;
-	border-color: #555;
-}
-
-.high-contrast .tool-btn {
-	background-color: #333;
-	color: #ccc;
-	border-color: #555;
-}
-
-.high-contrast .tool-btn.active {
-	background-color: #1a3a5a;
-	border-color: #4A90E2;
-	color: #4A90E2;
-}
-
-.high-contrast .score-bar {
-	background-color: #333;
-}
-
-.high-contrast .score-fill {
-	background: linear-gradient(90deg, #667eea, #4A90E2);
-}
-
-.high-contrast .score-text {
-	color: #ccc;
-}
-
-.high-contrast .tips {
-	background-color: #2a2a2a;
-	border-color: #4A90E2;
-}
-
-.high-contrast .tip-item {
-	color: #ccc;
-}
-
-.high-contrast .raw-text {
-	background-color: #2a2a2a;
-	color: #ccc;
-}
-
-.high-contrast .record-item {
-	border-color: #333;
-}
-
-.high-contrast .record-title {
-	color: #fff;
-}
-
-.high-contrast .record-time {
-	color: #aaa;
-}
-
-.result-card {
-	background-color: #EBF3FF;
-	border: none;
-	.text-title, .text-content {
-		color: $main-color;
-	}
-}
-
-.result-meta,
-.chips,
-.record-tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12rpx;
-}
-
-.result-meta {
-	margin-top: 20rpx;
+	min-width: 180rpx;
 }
 
 .meta-tag,
 .chip {
-	display: inline-flex;
-	align-items: center;
 	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
 	font-size: 24rpx;
 }
 
 .meta-tag {
-	background-color: #FFFFFF;
+	background-color: #ffffff;
 	color: $main-color;
 }
 
 .meta-tag.subtle {
 	background-color: rgba(255, 255, 255, 0.7);
-	color: #5f6b7a;
+	color: #64748b;
 }
 
-.kv {
-	margin-top: 18rpx;
+.score-text {
+	font-size: 24rpx;
+	color: #64748b;
+}
+
+.score-bar {
+	margin-top: 14rpx;
+	height: 14rpx;
+	background-color: #e5e7eb;
+	border-radius: 999rpx;
+	overflow: hidden;
+}
+
+.score-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #4a90e2, #667eea);
+}
+
+.info-row {
 	display: flex;
 	gap: 20rpx;
+	padding-top: 20rpx;
 }
 
-.k {
+.info-key {
 	width: 160rpx;
 	flex-shrink: 0;
-	color: #666;
 	font-size: 28rpx;
+	color: #64748b;
 }
 
-.v {
-	color: #333;
+.info-value {
+	flex: 1;
 	font-size: 30rpx;
-	line-height: 1.6;
+	line-height: 1.7;
+	color: #1f2937;
 }
 
 .alert-card {
-	background-color: #FFF8F6;
-	border: 2rpx solid #FFE0D8;
+	background-color: #fff8f6;
+	border: 2rpx solid #ffe0d8;
 }
 
 .missing-card {
-	background-color: #FFFDF4;
-	border: 2rpx solid #FFE8A3;
-}
-
-.list-row,
-.row-head,
-.record-main,
-.record-item {
-	display: flex;
+	background-color: #fffdf4;
+	border: 2rpx solid #ffe8a3;
 }
 
 .list-row {
+	display: flex;
+	align-items: flex-start;
 	gap: 16rpx;
 	margin-top: 18rpx;
-	align-items: flex-start;
 }
 
 .dot {
 	width: 14rpx;
 	height: 14rpx;
-	border-radius: 7rpx;
+	margin-top: 16rpx;
+	border-radius: 50%;
 	background-color: $main-color;
-	margin-top: 14rpx;
 	flex-shrink: 0;
 }
 
@@ -785,48 +629,45 @@ onMounted(() => {
 }
 
 .list-text {
+	flex: 1;
 	font-size: 30rpx;
-	color: #444;
 	line-height: 1.7;
-}
-
-.chips {
-	margin-top: 18rpx;
+	color: #374151;
 }
 
 .chip {
-	background-color: #FFF3BF;
-	color: #7A5C00;
+	background-color: #fff3bf;
+	color: #7a5c00;
 }
 
-.row-head,
-.record-main,
-.record-item {
-	align-items: center;
-	justify-content: space-between;
-}
-
-.toggle-link {
+.toggle-link,
+.mini-link {
 	font-size: 26rpx;
 	color: $main-color;
+	background: none;
+	padding: 0;
 }
 
 .raw-text {
 	margin-top: 18rpx;
 	padding: 24rpx;
-	background-color: #F8FAFC;
+	background-color: #f8fafc;
 	border-radius: 18rpx;
 	font-size: 28rpx;
-	color: #4B5563;
 	line-height: 1.8;
+	color: #4b5563;
 	white-space: pre-wrap;
 	word-break: break-all;
 }
 
+.parse-error {
+	margin-top: 16rpx;
+}
+
 .record-item {
 	padding: 24rpx 0;
-	border-bottom: 1rpx solid #EDF1F5;
-	gap: 20rpx;
+	border-bottom: 1rpx solid #edf1f5;
+	gap: 16rpx;
 }
 
 .record-item:last-child {
@@ -842,12 +683,91 @@ onMounted(() => {
 
 .record-title {
 	font-size: 30rpx;
-	color: #333;
 	line-height: 1.6;
+	color: #1f2937;
 }
 
 .record-time {
 	font-size: 24rpx;
-	color: #8893A1;
+	color: #94a3b8;
+}
+
+.large-font .text-title {
+	font-size: 38rpx;
+}
+
+.large-font .text-helper,
+.large-font .tip-item,
+.large-font .score-text,
+.large-font .toggle-link {
+	font-size: 30rpx;
+}
+
+.large-font .summary-text,
+.large-font .info-value,
+.large-font .list-text,
+.large-font .record-title {
+	font-size: 34rpx;
+}
+
+.high-contrast {
+	background-color: #000;
+	color: #fff;
+}
+
+.high-contrast .card-elder {
+	background-color: #111;
+	border-color: #333;
+}
+
+.high-contrast .tool-btn,
+.high-contrast .ghost-btn {
+	background-color: #222;
+	color: #fff;
+	border-color: #444;
+}
+
+.high-contrast .tool-btn.active {
+	background-color: #123456;
+	color: #8ec5ff;
+}
+
+.high-contrast .tip-item,
+.high-contrast .text-helper,
+.high-contrast .score-text,
+.high-contrast .record-time,
+.high-contrast .info-key {
+	color: #cbd5e1;
+}
+
+.high-contrast .info-value,
+.high-contrast .list-text,
+.high-contrast .record-title,
+.high-contrast .summary-text,
+.high-contrast .text-title {
+	color: #fff;
+}
+
+.high-contrast .meta-tag {
+	background-color: #1e293b;
+	color: #8ec5ff;
+}
+
+.high-contrast .meta-tag.subtle {
+	background-color: #1f2937;
+	color: #cbd5e1;
+}
+
+.high-contrast .raw-text {
+	background-color: #1f2937;
+	color: #e2e8f0;
+}
+
+.high-contrast .fallback-hint {
+	background-color: #1f2937;
+}
+
+.high-contrast .score-bar {
+	background-color: #1f2937;
 }
 </style>
