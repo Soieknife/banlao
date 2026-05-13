@@ -85,7 +85,11 @@ router.post('/chat', auth, async (req, res) => {
         let aiResponse = '我暂时无法回复，请稍后重试。';
         try {
             const response = await aiService.chat(message);
-            aiResponse = response && response.response ? response.response : aiResponse;
+            if (typeof response === 'string' && response.trim()) {
+                aiResponse = response.trim();
+            } else if (response && typeof response.response === 'string' && response.response.trim()) {
+                aiResponse = response.response.trim();
+            }
         } catch (aiError) {
             console.error('[AI] AI 服务调用失败:', aiError.message);
             // 使用默认回复，但继续处理

@@ -1,6 +1,4 @@
-/**
- * WebSocket 连接管理工具
- */
+import config from '@/config'
 
 let socket = null
 let reconnectAttempts = 0
@@ -8,15 +6,11 @@ const MAX_RECONNECT_ATTEMPTS = 5
 const RECONNECT_INTERVAL = 3000
 
 function getSocketUrl() {
-  // 确定WebSocket URL
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.host
-  // 如果有API_URL配置，从中提取host
-  if (process.env.VUE_APP_API_URL) {
-    const url = new URL(process.env.VUE_APP_API_URL)
-    return `${protocol}//${url.host}`
-  }
-  return `${protocol}//${host}`
+  const isHttps = typeof window !== 'undefined' && window.location && window.location.protocol === 'https:'
+  const protocol = isHttps ? 'wss:' : 'ws:'
+  const host = config?.server?.host || '127.0.0.1'
+  const port = config?.server?.port || 3000
+  return `${protocol}//${host}:${port}`
 }
 
 function initSocket(userId, token, onConnected, onDisconnected, onError) {
@@ -25,8 +19,8 @@ function initSocket(userId, token, onConnected, onDisconnected, onError) {
 
   socket = io(wsUrl, {
     query: {
-      userId: userId,
-      token: token
+      userId,
+      token
     },
     reconnectionDelay: RECONNECT_INTERVAL,
     reconnection: true,
@@ -45,7 +39,7 @@ function initSocket(userId, token, onConnected, onDisconnected, onError) {
   })
 
   socket.on('reconnect_attempt', () => {
-    reconnectAttempts++
+    reconnectAttempts += 1
     console.log(`[Socket] Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`)
   })
 
@@ -92,7 +86,18 @@ function off(eventName, handler) {
   }
 }
 
-module.exports = {
+export {
+  initSocket,
+  getSocket,
+  isConnected,
+  disconnect,
+  emit,
+  on,
+  off,
+  getSocketUrl
+}
+
+export default {
   initSocket,
   getSocket,
   isConnected,
