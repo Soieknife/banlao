@@ -239,6 +239,13 @@ function finalizeExtracted(extracted, rawText) {
 }
 
 async function parseLeaflet(text) {
+    const extractorSystemPrompt = [
+        '你是药品说明书结构化提取助手。',
+        '你的唯一任务是从用户提供的药品说明书文字中提取字段，并输出严格合法的 JSON。',
+        '不要输出解释、不要输出 Markdown、不要输出代码块、不要补充多余前后缀。',
+        '如果某个字段无法确认，请输出空字符串。'
+    ].join(' ');
+
     const prompt = [
         '你是一名专业的药品说明书信息提取专家，擅长从各种格式的药品说明书中准确提取关键信息。',
         '请根据用户提供的药品说明书文字，提取并整理以下信息，输出严格 JSON（不要包含任何多余文字）：',
@@ -277,7 +284,11 @@ async function parseLeaflet(text) {
         text
     ].join('\n');
 
-    const answer = await aiService.chat(prompt);
+    const answer = await aiService.chat(prompt, {
+        systemPrompt: extractorSystemPrompt,
+        temperature: 0.1,
+        maxTokens: 1400
+    });
     const parsed = safeJsonParse(answer);
     if (parsed.ok) {
         return { ok: true, extracted: parsed.value, raw: answer };

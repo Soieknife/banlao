@@ -198,9 +198,9 @@ OCR_PROVIDER=baidu
 # BAIDU_OCR_API_KEY=
 # BAIDU_OCR_SECRET_KEY=
 
-AI_API_KEY=your_api_key_here
-AI_API_URL=https://api.deepseek.com/v1/chat/completions
-AI_MODEL=deepseek-chat
+AI_API_KEY=your_qianfan_v2_api_key_here
+AI_API_URL=https://qianfan.baidubce.com/v2/chat/completions
+AI_MODEL=ernie-4.0-turbo-8k
 ```
 
 ### 启动步骤
