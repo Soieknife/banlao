@@ -46,7 +46,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
 
 const detail = ref({});
@@ -83,12 +84,9 @@ const loadDetail = async (id) => {
 	}
 };
 
-onMounted(() => {
-	const pages = getCurrentPages();
-	const currentPage = pages[pages.length - 1];
-	const id = currentPage?.options?.id;
-	if (id) {
-		loadDetail(id);
+onLoad((options) => {
+	if (options && options.id) {
+		loadDetail(options.id);
 	}
 });
 </script>
