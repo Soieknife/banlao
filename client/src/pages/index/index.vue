@@ -192,6 +192,18 @@
 			</view>
 		</view>
 	</view>
+
+
+	
+	  <!-- 戏曲 & 防诈骗 跳转卡片 -->
+  <view class="card-box">
+    <view class="card" @click="goOpera">
+      <text class="card-text">🎭 戏曲天地</text>
+    </view>
+    <view class="card" @click="goAntiFraud">
+      <text class="card-text">🛡️ 防诈骗专区</text>
+    </view>
+  </view>
 </template>
 
 <script setup>
@@ -456,6 +468,21 @@ onShow(() => {
 	if (!loadUser()) return;
 	refreshHome();
 });
+
+
+// 戏曲天地跳转
+const goOpera = () => {
+  uni.navigateTo({
+    url: "/pages/opera/list"
+  })
+}
+
+// 防诈骗专区跳转
+const goAntiFraud = () => {
+  uni.navigateTo({
+    url: "/pages/anti-fraud/list"
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -653,5 +680,23 @@ onShow(() => {
 
 .modal-actions button {
 	flex: 1;
+}
+
+
+.card-box {
+  padding: 20rpx;
+}
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin-bottom: 20rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
+}
+.card-text {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333;
 }
 </style>
