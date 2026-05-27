@@ -16,7 +16,28 @@
 				<view v-if="detail.category" class="hero-category">{{ detail.category }}</view>
 			</view>
 
-			<!-- 播放器卡片 -->
+			<!-- 视频播放器 -->
+			<view v-if="detail.video_url" class="video-section">
+				<view class="video-header">
+					<text class="section-icon">🎬</text>
+					<text class="section-title">精彩视频</text>
+				</view>
+				<view class="video-wrapper">
+					<video
+						:id="'operaVideo'"
+						:src="detail.video_url"
+						:poster="detail.cover_url"
+						controls
+						show-fullscreen-btn
+						show-play-btn
+						show-center-play-btn
+						enable-progress-gesture
+						class="opera-video"
+					></video>
+				</view>
+			</view>
+
+			<!-- 音频播放器 -->
 			<view v-if="detail.audio_url" class="player-card senior-card">
 				<view class="player-info">
 					<text class="player-icon">{{ playing ? '🔊' : '🎵' }}</text>
@@ -53,6 +74,10 @@
 					<view class="section-header">
 						<text class="section-icon">📖</text>
 						<text class="section-title">剧情简介</text>
+						<view class="speak-btn" :class="{ speaking: speakingStory }" @click="speakStory">
+							<text class="speak-icon">{{ speakingStory ? '🔊' : '🔈' }}</text>
+							<text class="speak-text">{{ speakingStory ? '朗读中...' : '听剧情' }}</text>
+						</view>
 					</view>
 					<text class="section-text senior-text-body">{{ detail.story }}</text>
 				</view>
@@ -65,16 +90,18 @@
 import { ref, onUnmounted } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
-import { speak } from '../../utils/voice';
+import { speak, stop as stopSpeech } from '../../utils/voice';
 
 const detail = ref({});
 const loading = ref(false);
 const playing = ref(false);
+const speakingStory = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
 const progress = ref(0);
 
 let audioContext = null;
+let speakTimer = null;
 
 const categoryColors = {
 	'豫剧': ['#E74C3C', '#FADBD8'],
@@ -99,16 +126,43 @@ const formatTime = (seconds) => {
 	return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 };
 
+// 朗读剧情简介
+const speakStory = () => {
+	if (speakingStory.value) {
+		// 正在朗读则停止
+		stopSpeech();
+		speakingStory.value = false;
+		if (speakTimer) {
+			clearTimeout(speakTimer);
+			speakTimer = null;
+		}
+		return;
+	}
+
+	if (!detail.value.story) return;
+
+	speakingStory.value = true;
+	// 先停止可能在播放的音频
+	if (playing.value && audioContext) {
+		audioContext.pause();
+		playing.value = false;
+	}
+
+	speak(detail.value.story, { immediate: true });
+
+	// 根据文字长度估算朗读时间，朗读结束后重置状态
+	const estimatedTime = Math.max(detail.value.story.length * 200, 5000);
+	speakTimer = setTimeout(() => {
+		speakingStory.value = false;
+	}, estimatedTime);
+};
+
 const initAudio = (url) => {
 	if (audioContext) {
 		audioContext.destroy();
 	}
 	audioContext = uni.createInnerAudioContext();
 	audioContext.src = url;
-
-	audioContext.onCanplay(() => {
-		// duration 可能在此时还不可用，需要在 onTimeUpdate 中获取
-	});
 
 	audioContext.onTimeUpdate(() => {
 		if (audioContext.duration && isFinite(audioContext.duration)) {
@@ -133,6 +187,12 @@ const initAudio = (url) => {
 
 const togglePlay = () => {
 	if (!audioContext || !detail.value.audio_url) return;
+
+	// 停止剧情朗读
+	if (speakingStory.value) {
+		stopSpeech();
+		speakingStory.value = false;
+	}
 
 	if (playing.value) {
 		audioContext.pause();
@@ -170,12 +230,15 @@ onLoad((options) => {
 	}
 });
 
-// 页面卸载时销毁音频
 onUnmounted(() => {
 	if (audioContext) {
 		audioContext.stop();
 		audioContext.destroy();
 		audioContext = null;
+	}
+	stopSpeech();
+	if (speakTimer) {
+		clearTimeout(speakTimer);
 	}
 });
 </script>
@@ -211,7 +274,31 @@ onUnmounted(() => {
 	color: $text-primary;
 }
 
-/* 播放器卡片 */
+/* 视频区域 */
+.video-section {
+	margin: $spacing-md;
+	background-color: $card-bg;
+	border-radius: $radius-lg;
+	overflow: hidden;
+	box-shadow: $shadow-sm;
+}
+
+.video-header {
+	display: flex;
+	align-items: center;
+	padding: $spacing-md $spacing-lg;
+}
+
+.video-wrapper {
+	width: 100%;
+}
+
+.opera-video {
+	width: 100%;
+	height: 420rpx;
+}
+
+/* 音频播放器卡片 */
 .player-card {
 	margin: $spacing-md;
 	padding: $spacing-lg;
@@ -312,13 +399,11 @@ onUnmounted(() => {
 
 /* 内容卡片 */
 .detail-card {
-	margin: -$spacing-lg $spacing-md 0;
+	margin: $spacing-md;
 	padding: $spacing-lg;
 	border-radius: $radius-lg;
 	background-color: $card-bg;
 	box-shadow: $shadow-md;
-	position: relative;
-	z-index: 1;
 }
 
 .detail-name {
@@ -362,6 +447,43 @@ onUnmounted(() => {
 	font-size: $fs-18;
 	font-weight: $fw-bold;
 	color: $text-primary;
+	flex: 1;
+}
+
+/* 朗读按钮 */
+.speak-btn {
+	display: flex;
+	align-items: center;
+	padding: $spacing-xs $spacing-md;
+	border-radius: $radius-full;
+	background: linear-gradient(135deg, #667eea, #764ba2);
+	transition: all $transition-base;
+	flex-shrink: 0;
+
+	&:active {
+		transform: scale(0.95);
+	}
+
+	&.speaking {
+		background: linear-gradient(135deg, #27AE60, #229954);
+		animation: pulse 1.5s infinite;
+	}
+}
+
+.speak-icon {
+	font-size: 28rpx;
+	margin-right: $spacing-xs;
+}
+
+.speak-text {
+	font-size: $fs-12;
+	font-weight: $fw-bold;
+	color: #fff;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
 }
 
 .section-text {
