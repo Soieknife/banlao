@@ -177,6 +177,16 @@
 					<view class="senior-text-title">个人信息</view>
 					<view class="senior-text-helper">手机号、家人和紧急联系人</view>
 				</view>
+				<view class="grid-item senior-card" @click="goOpera">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🎭</text></view>
+					<view class="senior-text-title">戏曲天地</view>
+					<view class="senior-text-helper">国粹经典，传统文化</view>
+				</view>
+				<view class="grid-item senior-card" @click="goAntiFraud">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🛡️</text></view>
+					<view class="senior-text-title">防诈骗专区</view>
+					<view class="senior-text-helper">提高警惕，守护财产</view>
+				</view>
 			</view>
 		</template>
 
@@ -192,18 +202,6 @@
 			</view>
 		</view>
 	</view>
-
-
-	
-	  <!-- 戏曲 & 防诈骗 跳转卡片 -->
-  <view class="card-box">
-    <view class="card" @click="goOpera">
-      <text class="card-text">🎭 戏曲天地</text>
-    </view>
-    <view class="card" @click="goAntiFraud">
-      <text class="card-text">🛡️ 防诈骗专区</text>
-    </view>
-  </view>
 </template>
 
 <script setup>
@@ -680,23 +678,5 @@ const goAntiFraud = () => {
 
 .modal-actions button {
 	flex: 1;
-}
-
-
-.card-box {
-  padding: 20rpx;
-}
-.card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 40rpx;
-  margin-bottom: 20rpx;
-  text-align: center;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
-}
-.card-text {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #333;
 }
 </style>

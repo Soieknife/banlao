@@ -1,106 +1,190 @@
 <template>
-  <view class="detail-container">
-    <image :src="detail.cover" class="detail-cover"></image>
-    <view class="detail-content">
-      <text class="detail-title">{{ detail.name }}</text>
-      <text class="detail-intro">{{ detail.intro }}</text>
-      <view class="detail-section">
-        <text class="section-title">剧情简介</text>
-        <text class="section-text">{{ detail.story }}</text>
-      </view>
-    </view>
-  </view>
+	<view class="page-container detail-page senior-high-contrast senior-large-font">
+		<view v-if="loading" class="loading-state">
+			<text class="senior-text-body">加载中...</text>
+		</view>
+
+		<view v-else-if="!detail.id" class="empty-state">
+			<text class="empty-emoji">🎭</text>
+			<text class="senior-text-body">未找到该戏曲信息</text>
+		</view>
+
+		<template v-else>
+			<!-- 封面区域 -->
+			<view class="detail-hero" :style="getCoverStyle(detail)">
+				<text class="hero-emoji">🎵</text>
+				<view v-if="detail.category" class="hero-category">{{ detail.category }}</view>
+			</view>
+
+			<!-- 内容卡片 -->
+			<view class="detail-card senior-card">
+				<text class="detail-name">{{ detail.name }}</text>
+				<text class="detail-intro senior-text-helper">{{ detail.intro }}</text>
+
+				<view class="divider"></view>
+
+				<view class="section">
+					<view class="section-header">
+						<text class="section-icon">📖</text>
+						<text class="section-title">剧情简介</text>
+					</view>
+					<text class="section-text senior-text-body">{{ detail.story }}</text>
+				</view>
+			</view>
+		</template>
+	</view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      id: 0,
-      detail: {}
-    }
-  },
-  onLoad(options) {
-    this.id = options.id
-    this.getOperaDetail()
-  },
-  methods: {
-    getOperaDetail() {
-      // 模拟数据，后续对接后端接口时可以替换
-      const allOpera = [
-        {
-          id: 1,
-          name: "豫剧《穆桂英挂帅》",
-          cover: "/static/opera/1.jpg",
-          intro: "豫剧经典剧目，展现巾帼英雄的豪情壮志",
-          story: "北宋时期，杨家将后代穆桂英，在国家危难之际，毅然挂帅出征，大败敌军，保卫家国的故事。全剧唱腔高亢激昂，人物形象鲜明，是豫剧的代表作之一。"
-        },
-        {
-          id: 2,
-          name: "京剧《霸王别姬》",
-          cover: "/static/opera/2.jpg",
-          intro: "京剧经典，千古绝唱的爱情悲剧",
-          story: "楚汉相争末期，项羽被刘邦大军围困于垓下，四面楚歌。虞姬为不拖累项羽，拔剑自刎，项羽也最终乌江自刎。全剧唱腔凄美，是京剧艺术的巅峰之作。"
-        },
-        {
-          id: 3,
-          name: "黄梅戏《天仙配》",
-          cover: "/static/opera/3.jpg",
-          intro: "黄梅戏经典，讲述七仙女与董永的爱情传说",
-          story: "七仙女下凡，与孝子董永相遇，两人结为夫妻，过着男耕女织的幸福生活。后被玉帝发现，强行拆散，留下一段凄美的爱情故事。"
-        }
-      ]
-      this.detail = allOpera.find(item => item.id == this.id) || {}
-    }
-  }
-}
+<script setup>
+import { ref, onMounted } from 'vue';
+import { request } from '../../utils/request';
+
+const detail = ref({});
+const loading = ref(false);
+
+const categoryColors = {
+	'豫剧': ['#E74C3C', '#FADBD8'],
+	'京剧': ['#D4AC0D', '#FEF9E7'],
+	'黄梅戏': ['#27AE60', '#D5F5E3'],
+	'越剧': ['#8E44AD', '#E8DAEF'],
+	'评剧': ['#2980B9', '#D6EAF8'],
+	'昆曲': ['#E67E22', '#FDEBD0']
+};
+
+const getCoverStyle = (item) => {
+	const colors = categoryColors[item.category] || ['#667eea', '#e8eaf6'];
+	return {
+		background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+	};
+};
+
+const loadDetail = async (id) => {
+	loading.value = true;
+	try {
+		const res = await request(`/opera/detail/${id}`, 'GET', {}, { showLoading: false });
+		detail.value = res.data || {};
+		if (detail.value.name) {
+			uni.setNavigationBarTitle({ title: detail.value.name });
+		}
+	} catch (err) {
+		uni.showToast({ title: '加载失败', icon: 'none' });
+	} finally {
+		loading.value = false;
+	}
+};
+
+onMounted(() => {
+	const pages = getCurrentPages();
+	const currentPage = pages[pages.length - 1];
+	const id = currentPage?.options?.id;
+	if (id) {
+		loadDetail(id);
+	}
+});
 </script>
 
-<style scoped>
-.detail-container {
-  background-color: #f5f5f5;
-  min-height: 100vh;
+<style lang="scss" scoped>
+.detail-page {
+	background-color: $bg-primary;
+	min-height: 100vh;
 }
-.detail-cover {
-  width: 100%;
-  height: 400rpx;
-  object-fit: cover;
+
+.detail-hero {
+	width: 100%;
+	height: 360rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
 }
-.detail-content {
-  padding: 30rpx;
-  background-color: #fff;
-  margin: -40rpx 20rpx 0;
-  border-radius: 24rpx;
-  position: relative;
-  z-index: 1;
+
+.hero-emoji {
+	font-size: 120rpx;
 }
-.detail-title {
-  font-size: 38rpx;
-  font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 20rpx;
+
+.hero-category {
+	position: absolute;
+	bottom: $spacing-md;
+	right: $spacing-lg;
+	background: rgba(255, 255, 255, 0.85);
+	padding: $spacing-xs $spacing-md;
+	border-radius: $radius-full;
+	font-size: $fs-14;
+	font-weight: $fw-bold;
+	color: $text-primary;
 }
+
+.detail-card {
+	margin: -$spacing-lg $spacing-md 0;
+	padding: $spacing-lg;
+	border-radius: $radius-lg;
+	background-color: $card-bg;
+	box-shadow: $shadow-md;
+	position: relative;
+	z-index: 1;
+}
+
+.detail-name {
+	font-size: $fs-22;
+	font-weight: $fw-bold;
+	color: $text-primary;
+	display: block;
+	margin-bottom: $spacing-sm;
+}
+
 .detail-intro {
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.6;
-  display: block;
-  margin-bottom: 30rpx;
+	font-size: $fs-16;
+	color: $text-secondary;
+	line-height: $line-height-relaxed;
+	display: block;
+	margin-bottom: $spacing-md;
 }
-.detail-section {
-  margin-top: 30rpx;
+
+.divider {
+	height: 2rpx;
+	background-color: $border-light;
+	margin: $spacing-lg 0;
 }
+
+.section {
+	margin-top: $spacing-sm;
+}
+
+.section-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: $spacing-md;
+}
+
+.section-icon {
+	font-size: 40rpx;
+	margin-right: $spacing-sm;
+}
+
 .section-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
-  display: block;
-  margin-bottom: 16rpx;
+	font-size: $fs-18;
+	font-weight: $fw-bold;
+	color: $text-primary;
 }
+
 .section-text {
-  font-size: 28rpx;
-  color: #444;
-  line-height: 1.8;
+	font-size: $fs-16;
+	color: $text-secondary;
+	line-height: 2;
+	text-align: justify;
+}
+
+.loading-state,
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 200rpx 0;
+}
+
+.empty-emoji {
+	font-size: 100rpx;
+	margin-bottom: $spacing-md;
 }
 </style>
