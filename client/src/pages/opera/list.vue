@@ -57,6 +57,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { request } from '../../utils/request';
+import { speak } from '../../utils/voice';
 
 const operaList = ref([]);
 const categories = ref([]);
@@ -116,6 +117,7 @@ const goToDetail = (item) => {
 onMounted(() => {
 	loadCategories();
 	loadOperaList();
+	speak('欢迎来到戏曲天地，这里有经典戏曲等您欣赏。');
 });
 </script>
 

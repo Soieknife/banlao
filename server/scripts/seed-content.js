@@ -108,6 +108,7 @@ db.serialize(() => {
         name TEXT NOT NULL,
         category TEXT DEFAULT '',
         cover_url TEXT DEFAULT '',
+        audio_url TEXT DEFAULT '',
         intro TEXT DEFAULT '',
         story TEXT NOT NULL,
         sort_order INTEGER DEFAULT 0,

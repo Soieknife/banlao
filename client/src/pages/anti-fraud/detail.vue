@@ -49,6 +49,7 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { request } from '../../utils/request';
+import { speak } from '../../utils/voice';
 
 const detail = ref({});
 const loading = ref(false);
@@ -76,6 +77,7 @@ const loadDetail = async (id) => {
 		detail.value = res.data || {};
 		if (detail.value.title) {
 			uni.setNavigationBarTitle({ title: detail.value.title });
+			speak(`正在为您介绍：${detail.value.title}`);
 		}
 	} catch (err) {
 		uni.showToast({ title: '加载失败', icon: 'none' });

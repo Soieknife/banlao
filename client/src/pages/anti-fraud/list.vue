@@ -65,6 +65,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { request } from '../../utils/request';
+import { speak } from '../../utils/voice';
 
 const articleList = ref([]);
 const categories = ref([]);
@@ -124,6 +125,7 @@ const goToDetail = (item) => {
 onMounted(() => {
 	loadCategories();
 	loadArticleList();
+	speak('欢迎来到防诈骗专区，了解常见骗局，保护您的财产安全。');
 });
 </script>
 
