@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const http = require('http');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -75,6 +75,8 @@ app.use('/api/relation', require('./routes/relation'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/medication', require('./routes/medication'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/opera', require('./routes/opera'));
+app.use('/api/anti-fraud', require('./routes/anti-fraud'));
 
 // 测试接口
 app.get('/api/health', (req, res) => {
