@@ -177,6 +177,16 @@
 					<view class="senior-text-title">个人信息</view>
 					<view class="senior-text-helper">手机号、家人和紧急联系人</view>
 				</view>
+				<view class="grid-item senior-card" @click="goOpera">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🎭</text></view>
+					<view class="senior-text-title">戏曲天地</view>
+					<view class="senior-text-helper">国粹经典，传统文化</view>
+				</view>
+				<view class="grid-item senior-card" @click="goAntiFraud">
+					<view class="icon-wrap"><text class="grid-emoji senior-fs-3xl">🛡️</text></view>
+					<view class="senior-text-title">防诈骗专区</view>
+					<view class="senior-text-helper">提高警惕，守护财产</view>
+				</view>
 			</view>
 		</template>
 
@@ -456,6 +466,21 @@ onShow(() => {
 	if (!loadUser()) return;
 	refreshHome();
 });
+
+
+// 戏曲天地跳转
+const goOpera = () => {
+  uni.navigateTo({
+    url: "/pages/opera/list"
+  })
+}
+
+// 防诈骗专区跳转
+const goAntiFraud = () => {
+  uni.navigateTo({
+    url: "/pages/anti-fraud/list"
+  })
+}
 </script>
 
 <style lang="scss" scoped>

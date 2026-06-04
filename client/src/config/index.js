@@ -28,7 +28,7 @@ function resolveServerHost() {
 	const runtimeHost = getRuntimeHostname();
 	if (runtimeHost) return runtimeHost;
 
-	return '127.0.0.1';
+	return '10.166.193.21';
 }
 
 function resolveServerPort() {
