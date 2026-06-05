@@ -9,17 +9,16 @@ const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.resolve(__dirname, '..', 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
-// ========== 公共CDN视频资源 ==========
-// 使用可公开访问的CDN链接，确保视频播放器正常工作
-// 如需替换为真正的戏曲视频，修改下面的URL即可
+// ========== 腾讯云COS戏曲视频资源 ==========
+// 视频托管在腾讯云对象存储，通过CDN加速访问
 
 const mediaData = [
-    { id: 1, audio_url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4', video_url: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4' },
-    { id: 2, audio_url: 'https://vjs.zencdn.net/v/oceans.mp4',                                                      video_url: 'https://vjs.zencdn.net/v/oceans.mp4' },
-    { id: 3, audio_url: 'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',                video_url: 'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4' },
-    { id: 4, audio_url: 'https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4',           video_url: 'https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-720p.mp4' },
-    { id: 5, audio_url: 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4',           video_url: 'https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4' },
-    { id: 6, audio_url: 'https://www.w3schools.com/html/movie.mp4',                                                  video_url: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { id: 1, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/muguiying.mp4', video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/muguiying.mp4' },
+    { id: 2, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/bawang.mp4',    video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/bawang.mp4' },
+    { id: 3, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/tianxianpei.mp4', video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/tianxianpei.mp4' },
+    { id: 4, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/liangzhu.mp4',  video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/liangzhu.mp4' },
+    { id: 5, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/huawei.mp4',    video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/huawei.mp4' },
+    { id: 6, audio_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/mudanting.mp4', video_url: 'https://banlao-opera-1440343950.cos.ap-beijing.myqcloud.com/opera/mudanting.mp4' },
 ];
 
 // ========== 执行更新 ==========
